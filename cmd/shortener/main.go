@@ -29,7 +29,7 @@ func ShortURL(w http.ResponseWriter, r *http.Request) {
 		shortURL := Generate()
 		Storage[shortURL] = string(bodyByte)
 
-		w.Header().Set("Content-Type: ", "text/plain")
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte("http://localhost:8080/" + shortURL))
 	case http.MethodGet:
@@ -43,11 +43,10 @@ func ShortURL(w http.ResponseWriter, r *http.Request) {
 		logURL := Storage[shortPath]
 
 		if logURL != "" {
-			w.Header().Set("Location", "")
+			w.Header().Set("Location", string(logURL))
 			w.WriteHeader(http.StatusTemporaryRedirect)
-			w.Write([]byte(logURL))
 		} else {
-			http.Error(w, "Not found", 400)
+			http.Error(w, "Not found", 404)
 		}
 
 	default:
