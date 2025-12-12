@@ -17,7 +17,7 @@ func Generate() string {
 	}
 	return string(res)
 }
-func ShortUrl(w http.ResponseWriter, r *http.Request) {
+func ShortURL(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		bodyByte, err := io.ReadAll(r.Body)
@@ -26,12 +26,12 @@ func ShortUrl(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), 400)
 			return
 		}
-		shortUrl := Generate()
-		Storage[shortUrl] = string(bodyByte)
+		shortURL := Generate()
+		Storage[shortURL] = string(bodyByte)
 
 		w.Header().Set("Content-Type: ", "text/plain")
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte("http://localhost:8080/" + shortUrl))
+		w.Write([]byte("http://localhost:8080/" + shortURL))
 	case http.MethodGet:
 		path := r.URL.Path
 		if path == "/" {
@@ -40,12 +40,12 @@ func ShortUrl(w http.ResponseWriter, r *http.Request) {
 		}
 
 		shortPath := path[1:]
-		logUrl := Storage[shortPath]
+		logURL := Storage[shortPath]
 
-		if logUrl != "" {
+		if logURL != "" {
 			w.Header().Set("Location", "")
 			w.WriteHeader(http.StatusTemporaryRedirect)
-			w.Write([]byte(logUrl))
+			w.Write([]byte(logURL))
 		} else {
 			http.Error(w, "Not found", 400)
 		}
@@ -57,7 +57,7 @@ func ShortUrl(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, ShortUrl)
+	mux.HandleFunc(`/`, ShortURL)
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		panic(err)
