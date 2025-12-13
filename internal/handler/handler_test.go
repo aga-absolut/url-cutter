@@ -21,7 +21,7 @@ func TestHandle(t *testing.T) {
 		body           string
 	}{
 		{
-			name:           "simple test",
+			name:           "first simple test",
 			postStatusCode: http.StatusCreated,
 			getStatusCode:  http.StatusTemporaryRedirect,
 			contentType:    "text/plain",
@@ -29,7 +29,7 @@ func TestHandle(t *testing.T) {
 			body:           "https://google.com",
 		},
 		{
-			name:           "simple test",
+			name:           "second simple test",
 			postStatusCode: http.StatusCreated,
 			getStatusCode:  http.StatusTemporaryRedirect,
 			contentType:    "text/plain",
@@ -48,7 +48,7 @@ func TestHandle(t *testing.T) {
 			r := w.Result()
 
 			assert.Equal(t, tt.postStatusCode, r.StatusCode)
-			assert.Equal(t, tt.contentType, r.Header.Get("Content-type"))
+			assert.Equal(t, tt.contentType, r.Header.Get("Content-Type"))
 
 			// Проверка, что создалась случайная ссылка
 			if !strings.Contains(w.Body.String(), "http://localhost:8080/") {
@@ -66,19 +66,17 @@ func TestHandle(t *testing.T) {
 				t.Errorf("Expected 8 symbols after /, got %d . ", len(shortURL))
 			}
 			//----------------------------------------Get request
-			req = httptest.NewRequest(http.MethodGet, longURL, nil)
+			req = httptest.NewRequest(http.MethodGet, "/" + shortURL, nil)
 			w = httptest.NewRecorder()
 
 			h = http.HandlerFunc(ShortURL)
 			h(w, req)
 
 			r = w.Result()
-
-			path := req.URL.Path
-			shortURL = path[1:]
-			longURL = StorageTest[shortURL]
 			assert.Equal(t, tt.getStatusCode, r.StatusCode)
-			assert.Equal(t, string(longURL), tt.body)
+
+			location := r.Header.Get("Location")
+			assert.Equal(t, location, tt.body)
 
 		})
 	}
