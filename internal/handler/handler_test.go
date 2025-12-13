@@ -47,7 +47,7 @@ func TestHandle(t *testing.T) {
 
 			r := w.Result()
 			defer r.Body.Close()
-			
+
 			assert.Equal(t, tt.postStatusCode, r.StatusCode)
 			assert.Equal(t, tt.contentType, r.Header.Get("Content-Type"))
 
@@ -74,6 +74,8 @@ func TestHandle(t *testing.T) {
 			h(w, req)
 
 			r = w.Result()
+			defer r.Body.Close()
+
 			assert.Equal(t, tt.getStatusCode, r.StatusCode)
 
 			location := r.Header.Get("Location")
