@@ -1,16 +1,16 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/aga-absolut/url-cutter/internal/handler"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, handler.ShortURL)
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		panic(err)
-	}
+	r := chi.NewRouter()
+	r.Post("/", handler.ShortPostReq)
+	r.Get(`/{rf}`, handler.ShortGetReq)
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

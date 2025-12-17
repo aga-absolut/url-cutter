@@ -6,10 +6,25 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/assert/v2"
 )
 
 var StorageTest = make(map[string]string)
+
+// func TestRequest(t *testing.T, ts httptest.Server, method, path string) (*http.Response, string) {
+// 	req, err := http.NewRequest(method, ts.URL+path, nil)
+// 	require.NoError(t, err)
+
+// 	resp, err := ts.Client().Do(req)
+// 	require.NoError(t, err)
+// 	defer resp.Body.Close()
+
+// 	res, err := io.ReadAll(resp.Body)
+// 	require.NoError(t, err)
+
+// 	return resp, string(res)
+// }
 
 func TestHandle(t *testing.T) {
 	tests := []struct {
@@ -39,10 +54,11 @@ func TestHandle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			//----------------------------------------Post request
 			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 
-			h := http.HandlerFunc(ShortURL)
+			h := http.HandlerFunc(ShortPostReq)
 			h(w, req)
 
 			r := w.Result()
@@ -56,22 +72,24 @@ func TestHandle(t *testing.T) {
 				t.Error("missing prefix http://localhost:8080/")
 			}
 
-			longURL := w.Body.String() 
+			longURL := w.Body.String()
 			expBody := "http://localhost:8080/"
-			shortURL:= longURL[len(expBody):] 
+			shortURL := longURL[len(expBody):]
 
 			//Создали мапу с ключом сген символов
-			StorageTest[shortURL] = tt.body 
+			StorageTest[shortURL] = tt.body
 
 			if len(shortURL) != 8 {
 				t.Errorf("Expected 8 symbols after /, got %d . ", len(shortURL))
 			}
 			//----------------------------------------Get request
-			req = httptest.NewRequest(http.MethodGet, "/" + shortURL, nil)
+			router := chi.NewRouter()
+			router.Get("/{rf}",ShortGetReq)
+
+			req = httptest.NewRequest(http.MethodGet, "/"+shortURL, nil)
 			w = httptest.NewRecorder()
 
-			h = http.HandlerFunc(ShortURL)
-			h(w, req)
+			router.ServeHTTP(w, req)
 
 			r = w.Result()
 			defer r.Body.Close()
