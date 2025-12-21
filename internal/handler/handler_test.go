@@ -12,8 +12,6 @@ import (
 	"github.com/go-playground/assert/v2"
 )
 
-var StorageTest = make(map[string]string)
-
 func TestHandle(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -22,6 +20,7 @@ func TestHandle(t *testing.T) {
 		contentType    string
 		request        string
 		body           string
+		serverAddress  string
 	}{
 		{
 			name:           "first simple test",
@@ -30,6 +29,7 @@ func TestHandle(t *testing.T) {
 			contentType:    "text/plain",
 			request:        "http://localhost:8080/",
 			body:           "https://google.com",
+			serverAddress:  "http://localhost:8080",
 		},
 		{
 			name:           "second simple test",
@@ -38,23 +38,30 @@ func TestHandle(t *testing.T) {
 			contentType:    "text/plain",
 			request:        "http://localhost:8080/",
 			body:           "https://yandex.ru",
+			serverAddress:  "http://localhost:8080",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := storage.NewStorage(StorageTest)
 
-			hand := NewHandler(*data, config.Config{})
+			var storageTest = make(map[string]string)
+
+			data := storage.NewStorage(storageTest)
+			cfg := config.Config{
+                ServerAddress: tt.serverAddress,
+            }
+			hand := NewHandler(*data, cfg)
 
 			router := chi.NewRouter()
 			router.Get("/{rf}", hand.ShortGetReq)
+			router.Post("/", hand.ShortPostReq)
 			//----------------------------------------Post request
 			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 
-			hand.ShortPostReq(w, req)
-
+			router.ServeHTTP(w, req)
+			
 			r := w.Result()
 			defer r.Body.Close()
 
@@ -63,11 +70,12 @@ func TestHandle(t *testing.T) {
 
 			body := strings.TrimSpace(w.Body.String())
 
-			if len(body) != 8 {
-				t.Fatalf("Expected short key length 8, got %d: %s", len(body), body)
+			shortURL := body[strings.LastIndex(body, "/")+1:]
+			if len(shortURL) != 8 {
+				t.Fatalf("Expected short key length 8, got %d: %s", len(shortURL), shortURL)
 			}
 
-			shortURL := body
+			shortURL = body
 			//----------------------------------------Get request
 
 			req = httptest.NewRequest(http.MethodGet, "/" + shortURL, nil)

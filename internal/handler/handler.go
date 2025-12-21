@@ -48,7 +48,7 @@ func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 
-	w.Write([]byte(h.config.ServerAddress + shortURL))
+	w.Write([]byte(h.config.ServerAddress + "/" + shortURL))
 }
 
 func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
