@@ -52,7 +52,7 @@ func TestHandle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			data := storage.NewStorage(TestStorage)
 
-			hand := NewHandler(*data,*config.NewConfig())
+			hand := NewHandler(*data,config.Config{})
 			//----------------------------------------Post request
 			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()

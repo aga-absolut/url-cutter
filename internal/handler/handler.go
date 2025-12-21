@@ -43,11 +43,12 @@ func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortURL := Generate()
-	h.storage.Set(string(resp), shortURL)
+	Storage[shortURL] = string(resp)
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("http://localhost:8080/" + shortURL))
+
+	w.Write([]byte(h.config.ServerAddress + shortURL))
 }
 
 func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {

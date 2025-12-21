@@ -11,9 +11,8 @@ import (
 )
 
 func main() {
-	dt := make(map[string]string)
-	config  := config.NewConfig()
-	storage := storage.NewStorage(dt)
-	handler := handler.NewHandler(*storage,*config)
-	log.Fatal(http.ListenAndServe(":8080", router.NewRouter(*handler)))
+	cfg := config.NewConfig()
+	storage := storage.NewStorage(handler.Storage)
+	handler := handler.NewHandler(*storage, *cfg)
+	log.Fatal(http.ListenAndServe(cfg.Host, router.NewRouter(*handler)))
 }
