@@ -43,7 +43,7 @@ func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortURL := Generate()
-	h.storage.Set(string(resp),shortURL)
+	h.storage.Set(string(resp), shortURL)
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)

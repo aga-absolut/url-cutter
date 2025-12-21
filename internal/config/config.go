@@ -8,18 +8,11 @@ type Config struct {
 }
 
 func NewConfig() *Config {
-	flA, flB := FlagA()
-	return &Config{
-		Host:          flA,
-		ServerAddress: flB,
-	}
-}
+	cfg := &Config{}
 
-func FlagA() (string, string) {
-	FlagA := flag.String("a", ":8080", "host:port")
-	FlagB := flag.String("b", "http://localhost"+*FlagA+"/", "serverAddress")
+	flag.StringVar(&cfg.Host, "a", ":8080", "server host:port to listen on")
+	flag.StringVar(&cfg.ServerAddress, "b", "", "base URL for shortened links")
 
 	flag.Parse()
-	
-	return *FlagA, *FlagB
+	return  cfg
 }

@@ -68,8 +68,6 @@ func TestHandle(t *testing.T) {
 			}
 
 			shortURL := body
-
-			t.Logf("Storage after POST: %v", StorageTest)
 			//----------------------------------------Get request
 
 			req = httptest.NewRequest(http.MethodGet, "/" + shortURL, nil)
