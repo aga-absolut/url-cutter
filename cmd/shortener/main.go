@@ -4,13 +4,16 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/handler"
-	"github.com/go-chi/chi/v5"
+	"github.com/aga-absolut/url-cutter/internal/router"
+	"github.com/aga-absolut/url-cutter/internal/storage"
 )
 
 func main() {
-	r := chi.NewRouter()
-	r.Post("/", handler.ShortPostReq)
-	r.Get(`/{rf}`, handler.ShortGetReq)
-	log.Fatal(http.ListenAndServe(":8080", r))
+	dt := make(map[string]string)
+	config  := config.NewConfig()
+	storage := storage.NewStorage(dt)
+	handler := handler.NewHandler(*storage,*config)
+	log.Fatal(http.ListenAndServe(":8080", router.NewRouter(*handler)))
 }

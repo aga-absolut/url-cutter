@@ -6,25 +6,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/assert/v2"
 )
 
 var StorageTest = make(map[string]string)
 
-// func TestRequest(t *testing.T, ts httptest.Server, method, path string) (*http.Response, string) {
-// 	req, err := http.NewRequest(method, ts.URL+path, nil)
-// 	require.NoError(t, err)
-
-// 	resp, err := ts.Client().Do(req)
-// 	require.NoError(t, err)
-// 	defer resp.Body.Close()
-
-// 	res, err := io.ReadAll(resp.Body)
-// 	require.NoError(t, err)
-
-// 	return resp, string(res)
-// }
+var TestStorage = map[string]string{
+	"name":        "first simple test",
+	"contentType": "text/plain",
+	"request":     "http://localhost:8080/",
+	"body":        "https://google.com",
+}
 
 func TestHandle(t *testing.T) {
 	tests := []struct {
@@ -52,14 +47,17 @@ func TestHandle(t *testing.T) {
 			body:           "https://yandex.ru",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			data := storage.NewStorage(TestStorage)
+
+			hand := NewHandler(*data,*config.NewConfig())
 			//----------------------------------------Post request
 			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 
-			h := http.HandlerFunc(ShortPostReq)
-			h(w, req)
+			hand.ShortPostReq(w, req)
 
 			r := w.Result()
 			defer r.Body.Close()
@@ -76,7 +74,7 @@ func TestHandle(t *testing.T) {
 			expBody := "http://localhost:8080/"
 			shortURL := longURL[len(expBody):]
 
-			//Создали мапу с ключом сген символов
+			// Создали мапу с ключом сген символов
 			StorageTest[shortURL] = tt.body
 
 			if len(shortURL) != 8 {
@@ -84,7 +82,7 @@ func TestHandle(t *testing.T) {
 			}
 			//----------------------------------------Get request
 			router := chi.NewRouter()
-			router.Get("/{rf}",ShortGetReq)
+			router.Get("/{rf}", hand.ShortGetReq)
 
 			req = httptest.NewRequest(http.MethodGet, "/"+shortURL, nil)
 			w = httptest.NewRecorder()
@@ -98,7 +96,6 @@ func TestHandle(t *testing.T) {
 
 			location := r.Header.Get("Location")
 			assert.Equal(t, location, tt.body)
-
 		})
 	}
 }
