@@ -14,13 +14,6 @@ import (
 
 var StorageTest = make(map[string]string)
 
-var TestStorage = map[string]string{
-	"name":        "first simple test",
-	"contentType": "text/plain",
-	"request":     "http://localhost:8080/",
-	"body":        "https://google.com",
-}
-
 func TestHandle(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -50,9 +43,12 @@ func TestHandle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := storage.NewStorage(TestStorage)
+			data := storage.NewStorage(StorageTest)
 
-			hand := NewHandler(*data,config.Config{})
+			hand := NewHandler(*data, config.Config{})
+
+			router := chi.NewRouter()
+			router.Get("/{rf}", hand.ShortGetReq)
 			//----------------------------------------Post request
 			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
@@ -65,26 +61,18 @@ func TestHandle(t *testing.T) {
 			assert.Equal(t, tt.postStatusCode, r.StatusCode)
 			assert.Equal(t, tt.contentType, r.Header.Get("Content-Type"))
 
-			// Проверка, что создалась случайная ссылка
-			if !strings.Contains(w.Body.String(), "http://localhost:8080/") {
-				t.Error("missing prefix http://localhost:8080/")
+			body := strings.TrimSpace(w.Body.String())
+
+			if len(body) != 8 {
+				t.Fatalf("Expected short key length 8, got %d: %s", len(body), body)
 			}
 
-			longURL := w.Body.String()
-			expBody := "http://localhost:8080/"
-			shortURL := longURL[len(expBody):]
+			shortURL := body
 
-			// Создали мапу с ключом сген символов
-			StorageTest[shortURL] = tt.body
-
-			if len(shortURL) != 8 {
-				t.Errorf("Expected 8 symbols after /, got %d . ", len(shortURL))
-			}
+			t.Logf("Storage after POST: %v", StorageTest)
 			//----------------------------------------Get request
-			router := chi.NewRouter()
-			router.Get("/{rf}", hand.ShortGetReq)
 
-			req = httptest.NewRequest(http.MethodGet, "/"+shortURL, nil)
+			req = httptest.NewRequest(http.MethodGet, "/" + shortURL, nil)
 			w = httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
@@ -92,7 +80,7 @@ func TestHandle(t *testing.T) {
 			r = w.Result()
 			defer r.Body.Close()
 
-			assert.Equal(t, tt.getStatusCode, r.StatusCode)
+			assert.Equal(t, r.StatusCode, tt.getStatusCode)
 
 			location := r.Header.Get("Location")
 			assert.Equal(t, location, tt.body)
