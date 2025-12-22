@@ -75,10 +75,9 @@ func TestHandle(t *testing.T) {
 				t.Fatalf("Expected short key length 8, got %d: %s", len(shortURL), shortURL)
 			}
 
-			shortURL = body
 			//----------------------------------------Get request
 
-			req = httptest.NewRequest(http.MethodGet, "/" + shortURL, nil)
+			req = httptest.NewRequest(http.MethodGet, tt.request + shortURL, nil)
 			w = httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
