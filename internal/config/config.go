@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"os"
+	"strings"
 )
 
 type Config struct {
@@ -21,8 +22,16 @@ func NewConfig() *Config {
 	if envHost := os.Getenv("SERVER_ADDRESS"); envHost != "" {
 		cfg.Host = envHost
 	}
-	if envAddress := os.Getenv("BASE_URL"); envAddress != "" {
-		cfg.ServerAddress = "http://" + envAddress
+	if envAddress := os.Getenv("BASE_URL"); envAddress != "" {	
+		envAddress = strings.Replace(envAddress, "http//" , "http://" , 1)
+
+		if !strings.HasPrefix(envAddress, "http://"){
+			cfg.ServerAddress = "http://" + envAddress
+		}
+		
+		if !strings.HasSuffix(envAddress, "/"){
+			cfg.ServerAddress = envAddress + "/"
+		}
 	}
 
 	return cfg
