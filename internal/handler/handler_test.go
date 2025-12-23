@@ -29,7 +29,6 @@ func TestHandle(t *testing.T) {
 			contentType:    "text/plain",
 			request:        "http://localhost:8080/",
 			body:           "https://google.com",
-			serverAddress:  "http://localhost:8080",
 		},
 		{
 			name:           "second simple test",
@@ -38,20 +37,15 @@ func TestHandle(t *testing.T) {
 			contentType:    "text/plain",
 			request:        "http://localhost:8080/",
 			body:           "https://yandex.ru",
-			serverAddress:  "http://localhost:8080",
 		},
 	}
+	
+	cfg := config.NewConfig()
+	storage := storage.NewStorage()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var storageTest = make(map[string]string)
-			data := storage.NewStorage(storageTest)
-
-			cfg := config.Config{
-                ServerAddress: tt.serverAddress,
-            }
-
-			hand := NewHandler(*data, cfg)
+			hand := NewHandler(storage, cfg)
 
 			router := chi.NewRouter()
 			router.Get("/{rf}", hand.ShortGetReq)
@@ -70,7 +64,7 @@ func TestHandle(t *testing.T) {
 			assert.Equal(t, tt.postStatusCode, r.StatusCode)
 			assert.Equal(t, tt.contentType, r.Header.Get("Content-Type"))
 
-			body := strings.TrimSpace(w.Body.String())
+			body := w.Body.String()
 
 			shortURL := body[strings.LastIndex(body, "/")+1:]
 			if len(shortURL) != 8 {

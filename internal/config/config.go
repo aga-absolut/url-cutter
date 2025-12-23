@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	ServerAddress string
-	Host          string
+	ServerAddress string `env:"BASE_URL"`
+	Host          string `env:"SERVER_ADDRESS"`
 }
 
 func NewConfig() *Config {

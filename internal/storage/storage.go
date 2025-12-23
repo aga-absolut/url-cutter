@@ -1,22 +1,23 @@
 package storage
 
-type Storage struct {
-	data map[string]string
+type Storage interface {
+	Set(string, string)
+	Get(string) (string, bool)
 }
 
-func NewStorage(dt map[string]string) *Storage {
-	dataURL := &Storage{
-		data: dt,
-	}
-	return dataURL
+type MapStorage struct {
+	Data map[string]string
 }
 
-func (s *Storage) Set(longURL, shortURL string) {
-	s.data[shortURL] = longURL
+func NewStorage() *MapStorage {
+	return &MapStorage{Data: make(map[string]string)}
 }
 
-func (s *Storage) Get(shortURL string) (string, bool) {
-	str, exist := s.data[shortURL]
+func (s *MapStorage) Set(longURL, shortURL string) {
+	s.Data[shortURL] = longURL
+}
+
+func (s *MapStorage) Get(shortURL string) (string, bool) {
+	str, exist := s.Data[shortURL]
 	return str, exist
 }
-

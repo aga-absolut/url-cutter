@@ -12,7 +12,9 @@ import (
 
 func main() {
 	cfg := config.NewConfig()
-	storage := storage.NewStorage(handler.Storage)
-	handler := handler.NewHandler(*storage, *cfg)
-	log.Fatal(http.ListenAndServe(cfg.Host, router.NewRouter(*handler)))
+	storage := storage.NewStorage()
+	handler := handler.NewHandler(storage, cfg)
+	router := router.NewRouter(handler)
+ 	log.Fatal(http.ListenAndServe(cfg.Host, router))
+
 }

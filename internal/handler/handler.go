@@ -13,7 +13,7 @@ import (
 
 var Symbols = []rune("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM")
 
-var Storage = make(map[string]string)
+// var Storage = make(map[string]string)
 
 func Generate() string {
 	res := make([]rune, 8)
@@ -24,14 +24,14 @@ func Generate() string {
 }
 
 type Handler struct {
-	storage storage.Storage
+	storage storage.MapStorage
 	config  config.Config
 }
 
-func NewHandler(st storage.Storage, cfg config.Config) *Handler {
+func NewHandler(st *storage.MapStorage, cfg *config.Config) *Handler {
 	handler := &Handler{
-		storage: st,
-		config:  cfg,
+		storage: *st,
+		config:  *cfg,
 	}
 	return handler
 }
@@ -64,14 +64,10 @@ func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resURL, err := h.storage.Get(path)
-	if !err {
-		http.Error(w, "Not found", http.StatusNotFound)
-	}
-	if resURL != "" {
+	if resURL, err := h.storage.Get(path);err {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	} else {
+	}else {
 		http.Error(w, "Not found", http.StatusNotFound)
 	}
 }
