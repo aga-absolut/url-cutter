@@ -4,6 +4,7 @@ import (
 	"io"
 	"math/rand/v2"
 	"net/http"
+	"strings"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/storage"
@@ -48,7 +49,11 @@ func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 
-	w.Write([]byte(h.config.ServerAddress + "/" + shortURL))
+	if !strings.HasSuffix(h.config.ServerAddress, "/"){
+		h.config.ServerAddress = h.config.ServerAddress + "/"
+	}
+	
+	w.Write([]byte(h.config.ServerAddress + shortURL))
 }
 
 func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
