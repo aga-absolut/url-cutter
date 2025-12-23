@@ -44,19 +44,21 @@ func TestHandle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			var storageTest = make(map[string]string)
-
 			data := storage.NewStorage(storageTest)
+
 			cfg := config.Config{
                 ServerAddress: tt.serverAddress,
             }
+
 			hand := NewHandler(*data, cfg)
 
 			router := chi.NewRouter()
 			router.Get("/{rf}", hand.ShortGetReq)
 			router.Post("/", hand.ShortPostReq)
+
 			//----------------------------------------Post request
+			
 			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 
