@@ -15,6 +15,5 @@ func main() {
 	storage := storage.NewStorage()
 	handler := handler.NewHandler(storage, cfg)
 	router := router.NewRouter(handler)
- 	log.Fatal(http.ListenAndServe(cfg.Host, router))
-
+	log.Fatal(http.ListenAndServe(cfg.Host, router))
 }
