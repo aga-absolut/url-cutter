@@ -42,12 +42,15 @@ func TestHandle(t *testing.T) {
 		},
 	}
 
-	cfg := config.NewConfig()
+	cfg := config.Config{
+		ServerAddress: "http://localhost:8080",
+		Host:          ":8080",
+	}
 	storage := storage.NewStorage()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(storage, cfg)
+			hand := NewHandler(storage, &cfg)
 
 			router := chi.NewRouter()
 			router.Get("/{rf}", hand.ShortGetReq)
@@ -107,11 +110,14 @@ func TestPostReqJSON(t *testing.T) {
 			body:        `{"url": "https://yandex.ru"}`,
 		},
 	}
-	cfg := config.NewConfig()
+	cfg := config.Config{
+		ServerAddress: "http://localhost:8080",
+		Host:          ":8080",
+	}
 	storage := storage.NewStorage()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(storage, cfg)
+			handler := NewHandler(storage, &cfg)
 
 			router := chi.NewRouter()
 			router.Use(middleware.CleanPath)
