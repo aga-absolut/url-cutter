@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"io"
 	"math/rand/v2"
 	"net/http"
@@ -12,8 +13,6 @@ import (
 )
 
 var Symbols = []rune("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM")
-
-// var Storage = make(map[string]string)
 
 func Generate() string {
 	res := make([]rune, 8)
@@ -49,11 +48,39 @@ func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 
-	if !strings.HasSuffix(h.config.ServerAddress, "/"){
+	if !strings.HasSuffix(h.config.ServerAddress, "/") {
 		h.config.ServerAddress = h.config.ServerAddress + "/"
 	}
-	
+
 	w.Write([]byte(h.config.ServerAddress + shortURL))
+}
+
+type JsonP struct {
+	Url string `json:"url"`
+}
+type JsonG struct {
+	Result string `json:"result"`
+}
+
+func (h *Handler) HandlerJSON(w http.ResponseWriter, r *http.Request) {
+	js := JsonP{}
+	if err := json.NewDecoder(r.Body).Decode(&js); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	shortURL := Generate()
+	h.storage.Set(js.Url, shortURL)
+
+	jss := JsonG{Result: h.config.ServerAddress + "/" + shortURL}
+	
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(jss); err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}	
 }
 
 func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
@@ -64,10 +91,10 @@ func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if resURL, err := h.storage.Get(path);err {
+	if resURL, err := h.storage.Get(path); err {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	}else {
+	} else {
 		http.Error(w, "Not found", http.StatusNotFound)
 	}
 }

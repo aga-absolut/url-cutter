@@ -39,9 +39,7 @@ func WithFieldsInfo(h http.HandlerFunc) http.HandlerFunc {
 		}
 
 		switch r.Method {
-
 		case http.MethodPost:
-
 			start := time.Now()
 			uri := r.RequestURI
 			method := r.Method
@@ -57,32 +55,19 @@ func WithFieldsInfo(h http.HandlerFunc) http.HandlerFunc {
 			)
 
 		case http.MethodGet:
-
 			responseData := &responseData{}
-
 			lw := LoggingResponseWriter{
 				ResponseWriter: w,
 				responseData:   responseData,
 			}
 
 			h.ServeHTTP(&lw, r)
-
 			logger.Info("Request data",
 				zap.Int("size", responseData.size),
 				zap.Int("status", responseData.status),
 			)
-
 		default:
 			logger.Error("Bad request")
 		}
 	}
 }
-
-// func WithFieldsInfoGet(h http.HandlerFunc) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		logger, err := zap.NewDevelopment()
-// 		if err != nil {
-// 			log.Fatal(err.Error())
-// 		}
-// 	}
-// }
