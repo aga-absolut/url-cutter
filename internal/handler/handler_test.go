@@ -136,7 +136,7 @@ func TestPostReqJSON(t *testing.T) {
 			body := w.Body.String()
 			assert.Contains(t, body, `"result"`, "в ответе должен быть ключ result")
 
-			var resp JsonG
+			var resp JSONResponse
 			err := json.Unmarshal(w.Body.Bytes(), &resp)
 			assert.NoError(t, err, "Failed to conver to Json")
 		})

@@ -22,6 +22,13 @@ func Generate() string {
 	return string(res)
 }
 
+type JSONRequest struct {
+	Url string `json:"url"`
+}
+type JSONResponse struct {
+	Result string `json:"result"`
+}
+
 type Handler struct {
 	storage storage.MapStorage
 	config  config.Config
@@ -55,15 +62,8 @@ func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(h.config.ServerAddress + shortURL))
 }
 
-type JsonP struct {
-	Url string `json:"url"`
-}
-type JsonG struct {
-	Result string `json:"result"`
-}
-
 func (h *Handler) HandlerJSON(w http.ResponseWriter, r *http.Request) {
-	js := JsonP{}
+	js := JSONRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&js); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -73,14 +73,17 @@ func (h *Handler) HandlerJSON(w http.ResponseWriter, r *http.Request) {
 	shortURL := Generate()
 	h.storage.Set(js.Url, shortURL)
 
-	jss := JsonG{Result: h.config.ServerAddress + "/" + shortURL}
-	
+	if !strings.HasSuffix(h.config.ServerAddress, "/") {
+		h.config.ServerAddress = h.config.ServerAddress + "/"
+	}
+	jss := JSONResponse{Result: h.config.ServerAddress + shortURL}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(jss); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}	
+	}
 }
 
 func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
