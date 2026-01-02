@@ -23,7 +23,7 @@ func Generate() string {
 }
 
 type JSONRequest struct {
-	Url string `json:"url"`
+	URL string `json:"url"`
 }
 type JSONResponse struct {
 	Result string `json:"result"`
@@ -71,7 +71,7 @@ func (h *Handler) HandlerJSON(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	shortURL := Generate()
-	h.storage.Set(js.Url, shortURL)
+	h.storage.Set(js.URL, shortURL)
 
 	if !strings.HasSuffix(h.config.ServerAddress, "/") {
 		h.config.ServerAddress = h.config.ServerAddress + "/"
