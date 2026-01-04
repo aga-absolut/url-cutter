@@ -10,7 +10,7 @@ import (
 
 type gzipWriter struct {
 	http.ResponseWriter
-	zw *gzip.Writer
+	zw io.Writer
 }
 
 func (c gzipWriter) Write(p []byte) (int, error) {
@@ -39,14 +39,14 @@ func Decompress(h http.Handler) http.Handler {
 			return 
 		}
 
-		zw, err := gzip.NewReader(r.Body)
+		zr, err := gzip.NewReader(r.Body)
 		if err != nil {
 			http.Error(w, "Bad Request: invalid gzip data", http.StatusBadRequest)
 			return
 		}
-		defer zw.Close()
+		defer zr.Close()
 
-		body, err := io.ReadAll(zw)
+		body, err := io.ReadAll(zr)
 		if err != nil {
 			http.Error(w, "Bad Request: failed to decompress", http.StatusBadRequest)
 			return
