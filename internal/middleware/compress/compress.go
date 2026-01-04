@@ -21,6 +21,7 @@ func Compress(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			h.ServeHTTP(w, r)
+			return 
 		}
 
 		zw := gzip.NewWriter(w)
@@ -33,19 +34,22 @@ func Compress(h http.HandlerFunc) http.HandlerFunc {
 
 func Decompress(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.Header.Get("Comtent-Encoding"), "gzip") {
+		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			h.ServeHTTP(w, r)
+			return 
 		}
 
 		zw, err := gzip.NewReader(r.Body)
 		if err != nil {
-			panic(err)
+			http.Error(w, "Bad Request: invalid gzip data", http.StatusBadRequest)
+			return
 		}
 		defer zw.Close()
 
 		body, err := io.ReadAll(zw)
 		if err != nil {
-			panic(err)
+			http.Error(w, "Bad Request: failed to decompress", http.StatusBadRequest)
+			return
 		}
 
 		r.Body = io.NopCloser(bytes.NewBuffer(body))
