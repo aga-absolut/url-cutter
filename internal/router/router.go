@@ -11,8 +11,8 @@ func NewRouter(handler *handler.Handler) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(logger.WithFieldsInfo)
 
-	router.With(compress.Decompress).Post("/", handler.ShortPostReq)
-	router.With(compress.Decompress).Post("/api/shorten", handler.HandlerJSON)
-	router.With(compress.Compress).Get("/{rf}",handler.ShortGetReq)
+	router.Post("/", compress.Decompress(handler.ShortPostReq))
+	router.Post("/api/shorten", compress.Decompress(handler.HandlerJSON))
+	router.Get("/{rf}", compress.Compress(handler.ShortGetReq))
 	return router
 }
