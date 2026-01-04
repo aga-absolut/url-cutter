@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/aga-absolut/url-cutter/internal/compress"
 	"github.com/aga-absolut/url-cutter/internal/handler"
 	"github.com/aga-absolut/url-cutter/internal/logger"
 	"github.com/go-chi/chi/v5"
@@ -8,8 +9,8 @@ import (
 
 func NewRouter(handler *handler.Handler) *chi.Mux {
 	router := chi.NewRouter()
-	router.Post("/", logger.WithFieldsInfo(handler.ShortPostReq))
+	router.Post("/", logger.WithFieldsInfo(compress.GzipMiddleware(handler.ShortPostReq)))
 	router.Post("/api/shorten", logger.WithFieldsInfo(handler.HandlerJSON))
-	router.Get("/{rf}", logger.WithFieldsInfo(handler.ShortGetReq))
+	router.Get("/{rf}", logger.WithFieldsInfo(compress.GzipMiddleware(handler.ShortGetReq)))
 	return router
 }

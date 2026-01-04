@@ -134,7 +134,7 @@ func TestPostReqJSON(t *testing.T) {
 			assert.Equal(t, r.Header.Get("Content-Type"), tt.contentType)
 
 			body := w.Body.String()
-			assert.Contains(t, body, `"result"`, "в ответе должен быть ключ result")
+			assert.Contains(t, body, `"result"`, "answer must have a result")
 
 			var resp JSONResponse
 			err := json.Unmarshal(w.Body.Bytes(), &resp)
