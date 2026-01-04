@@ -11,6 +11,7 @@ type (
 	compressWriter struct {
 		w  http.ResponseWriter
 		zw *gzip.Writer
+		writter bool
 	}
 
 	compressReader struct {
@@ -28,7 +29,8 @@ func NewCompressWriter(w http.ResponseWriter) *compressWriter {
 
 func (cw *compressWriter) Write(b []byte) (int, error) {
 	ans := cw.w.Header().Get("Content-type")
-	if ans == "application/json" || ans == "text/html"{
+	lower := strings.ToLower(ans)
+	if strings.Contains(lower, "application/json") || strings.Contains(lower, "text/html"){
 		return cw.zw.Write(b)
 	}
 	return cw.w.Write(b)
