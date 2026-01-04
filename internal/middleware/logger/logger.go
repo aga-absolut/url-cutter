@@ -31,8 +31,8 @@ func (r *LoggingResponseWriter) WriteHeader(statuscode int) {
 	r.responseData.status = statuscode
 }
 
-func WithFieldsInfo(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func WithFieldsInfo(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger, err := zap.NewDevelopment()
 		if err != nil {
 			log.Fatal(err.Error())
@@ -69,5 +69,5 @@ func WithFieldsInfo(h http.HandlerFunc) http.HandlerFunc {
 		default:
 			logger.Error("Bad request")
 		}
-	}
+	})
 }
