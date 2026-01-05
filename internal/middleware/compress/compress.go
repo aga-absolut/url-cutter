@@ -1,7 +1,6 @@
 package compress
 
 import (
-	"bytes"
 	"compress/gzip"
 	"io"
 	"net/http"
@@ -21,7 +20,7 @@ func Compress(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			h.ServeHTTP(w, r)
-			return 
+			return
 		}
 
 		zw := gzip.NewWriter(w)
@@ -36,7 +35,7 @@ func Decompress(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			h.ServeHTTP(w, r)
-			return 
+			return
 		}
 
 		zr, err := gzip.NewReader(r.Body)
@@ -44,17 +43,8 @@ func Decompress(h http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Bad Request: invalid gzip data", http.StatusBadRequest)
 			return
 		}
+		r.Body = zr
 		defer zr.Close()
-
-		body, err := io.ReadAll(zr)
-		if err != nil {
-			http.Error(w, "Bad Request: failed to decompress", http.StatusBadRequest)
-			return
-		}
-
-		r.Body = io.NopCloser(bytes.NewBuffer(body))
-		r.ContentLength = int64(len(body))
-
 		h.ServeHTTP(w, r)
 	}
 }
