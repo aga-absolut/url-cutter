@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/file"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -47,10 +48,10 @@ func TestHandle(t *testing.T) {
 		Host:          ":8080",
 	}
 	storage := storage.NewStorage()
-
+	file := file.NewFiles()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(storage, &cfg)
+			hand := NewHandler(storage, &cfg, file)
 
 			router := chi.NewRouter()
 			router.Get("/{rf}", hand.ShortGetReq)
@@ -115,9 +116,10 @@ func TestPostReqJSON(t *testing.T) {
 		Host:          ":8080",
 	}
 	storage := storage.NewStorage()
+	file := file.NewFiles()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(storage, &cfg)
+			handler := NewHandler(storage, &cfg, file)
 
 			router := chi.NewRouter()
 			router.Use(middleware.CleanPath)

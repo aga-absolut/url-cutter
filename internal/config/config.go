@@ -9,6 +9,7 @@ import (
 type Config struct {
 	ServerAddress string `env:"BASE_URL"`
 	Host          string `env:"SERVER_ADDRESS"`
+	Storage        string `env:"FILE_STORAGE_PATH"`
 }
 
 func NewConfig() *Config {
@@ -16,7 +17,7 @@ func NewConfig() *Config {
 
 	flag.StringVar(&cfg.Host, "a", ":8080", "server host:port to listen on")
 	flag.StringVar(&cfg.ServerAddress, "b", "http://localhost:8080", "base URL for shortened links")
-
+	flag.StringVar(&cfg.Storage, "f", "Storage.txt", "storage filename")
 	flag.Parse()
 
 	if envHost := os.Getenv("SERVER_ADDRESS"); envHost != "" {
@@ -32,6 +33,9 @@ func NewConfig() *Config {
 		if !strings.HasSuffix(envAddress, "/"){
 			cfg.ServerAddress = envAddress + "/"
 		}
+	}
+	if envStorage := os.Getenv("FILE_STORAGE_PATH"); envStorage != "" {
+		cfg.Storage = envStorage
 	}
 
 	return cfg

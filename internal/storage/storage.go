@@ -13,7 +13,7 @@ func NewStorage() *MapStorage {
 	return &MapStorage{Data: make(map[string]string)}
 }
 
-func (s *MapStorage) Set(longURL, shortURL string) {
+func (s *MapStorage) Set(shortURL, longURL string) {
 	s.Data[shortURL] = longURL
 }
 

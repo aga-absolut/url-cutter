@@ -43,6 +43,7 @@ func Decompress(h http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Bad Request: invalid gzip data", http.StatusBadRequest)
 			return
 		}
+
 		r.Body = zr
 		defer zr.Close()
 		h.ServeHTTP(w, r)

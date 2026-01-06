@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/file"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
@@ -32,25 +33,28 @@ type JSONResponse struct {
 type Handler struct {
 	storage storage.MapStorage
 	config  config.Config
+	file    file.Files
 }
 
-func NewHandler(st *storage.MapStorage, cfg *config.Config) *Handler {
+func NewHandler(st *storage.MapStorage, cfg *config.Config, file *file.Files) *Handler {
 	handler := &Handler{
 		storage: *st,
 		config:  *cfg,
+		file: *file,
 	}
 	return handler
 }
 
 func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
-	resp, err := io.ReadAll(r.Body)
+	originalUrl, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	shortURL := Generate()
-	h.storage.Set(string(resp), shortURL)
+	h.storage.Set(shortURL, string(originalUrl))
+	h.file.Save(h.config.Storage, shortURL, string(originalUrl))
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -71,7 +75,8 @@ func (h *Handler) HandlerJSON(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	shortURL := Generate()
-	h.storage.Set(js.URL, shortURL)
+	h.storage.Set(shortURL, js.URL)
+	h.file.Save(h.config.Storage, shortURL, js.URL)
 
 	if !strings.HasSuffix(h.config.ServerAddress, "/") {
 		h.config.ServerAddress = h.config.ServerAddress + "/"
@@ -97,7 +102,10 @@ func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
 	if resURL, err := h.storage.Get(path); err {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	} else {
+	} else if resURL, err := h.file.ReadFile(h.config.Storage, path); err {
+		w.Header().Set("Location", resURL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	}else{
 		http.Error(w, "Not found", http.StatusNotFound)
 	}
 }
