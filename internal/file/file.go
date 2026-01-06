@@ -31,12 +31,15 @@ func UpdateCounter() (string, error) {
 	militaryCounter += 1
 	counter := strconv.Itoa(militaryCounter)
 	err = os.WriteFile("counter.txt", []byte(counter), 0666)
+	if err != nil {
+		return "", err
+	}
 	return counter, nil
 }
 
 func (f *Files) Save(filename, shortURL, originalURL string) error {
 	counter, err := UpdateCounter()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	data := Files{
