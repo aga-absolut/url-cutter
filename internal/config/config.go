@@ -9,7 +9,7 @@ import (
 type Config struct {
 	ServerAddress string `env:"BASE_URL"`
 	Host          string `env:"SERVER_ADDRESS"`
-	Storage        string `env:"FILE_STORAGE_PATH"`
+	FilePath      string `env:"FILE_STORAGE_PATH"`
 }
 
 func NewConfig() *Config {
@@ -17,25 +17,25 @@ func NewConfig() *Config {
 
 	flag.StringVar(&cfg.Host, "a", ":8080", "server host:port to listen on")
 	flag.StringVar(&cfg.ServerAddress, "b", "http://localhost:8080", "base URL for shortened links")
-	flag.StringVar(&cfg.Storage, "f", "Storage.txt", "storage filename")
+	flag.StringVar(&cfg.FilePath, "f", "storage.txt", "storage filename")
 	flag.Parse()
 
 	if envHost := os.Getenv("SERVER_ADDRESS"); envHost != "" {
 		cfg.Host = envHost
 	}
-	if envAddress := os.Getenv("BASE_URL"); envAddress != "" {	
-		envAddress = strings.Replace(envAddress, "http//" , "http://" , 1)
+	if envAddress := os.Getenv("BASE_URL"); envAddress != "" {
+		envAddress = strings.Replace(envAddress, "http//", "http://", 1)
 
-		if !strings.HasPrefix(envAddress, "http://"){
+		if !strings.HasPrefix(envAddress, "http://") {
 			cfg.ServerAddress = "http://" + envAddress
 		}
-		
-		if !strings.HasSuffix(envAddress, "/"){
+
+		if !strings.HasSuffix(envAddress, "/") {
 			cfg.ServerAddress = envAddress + "/"
 		}
 	}
-	if envStorage := os.Getenv("FILE_STORAGE_PATH"); envStorage != "" {
-		cfg.Storage = envStorage
+	if envFilepath := os.Getenv("FILE_STORAGE_PATH"); envFilepath != "" {
+		cfg.FilePath = envFilepath
 	}
 
 	return cfg

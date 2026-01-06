@@ -7,15 +7,19 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/file"
 	"github.com/aga-absolut/url-cutter/internal/handler"
+	"github.com/aga-absolut/url-cutter/internal/middleware/logger"
 	"github.com/aga-absolut/url-cutter/internal/router"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 )
 
 func main() {
-	file := file.NewFiles()
-	cfg := config.NewConfig()
+	config := config.NewConfig()
+	logger := logger.NewLogger()
 	storage := storage.NewStorage()
-	handler := handler.NewHandler(storage, cfg ,file)
+	file := file.NewURLRecord(config)
+	handler := handler.NewHandler(storage, config, file)
 	router := router.NewRouter(handler)
-	log.Fatal(http.ListenAndServe(cfg.Host, router))
+
+	logger.Infow("Starting server", "addr", config.ServerAddress)
+	log.Fatal(http.ListenAndServe(config.Host, router))
 }

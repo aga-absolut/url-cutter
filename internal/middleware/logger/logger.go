@@ -1,12 +1,13 @@
 package logger
 
 import (
-	"log"
 	"net/http"
 	"time"
 
 	"go.uber.org/zap"
 )
+
+var sugar *zap.SugaredLogger
 
 type (
 	responseData struct {
@@ -31,13 +32,18 @@ func (r *LoggingResponseWriter) WriteHeader(statuscode int) {
 	r.responseData.status = statuscode
 }
 
+func NewLogger() zap.SugaredLogger {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+	sugar = logger.Sugar()
+	return *sugar
+}
+
 func WithFieldsInfo(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger, err := zap.NewDevelopment()
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
 		switch r.Method {
 		case http.MethodPost:
 			start := time.Now()
@@ -46,12 +52,12 @@ func WithFieldsInfo(h http.Handler) http.Handler {
 
 			h.ServeHTTP(w, r)
 
-			Duration := time.Since(start)
+			duration := time.Since(start)
 
-			logger.Info("Request data",
+			sugar.Info("Request data",
 				zap.String("URI", uri),
 				zap.String("method", method),
-				zap.Duration("time", Duration),
+				zap.Duration("time", duration),
 			)
 
 		case http.MethodGet:
@@ -62,12 +68,12 @@ func WithFieldsInfo(h http.Handler) http.Handler {
 			}
 
 			h.ServeHTTP(&lw, r)
-			logger.Info("Request data",
+			sugar.Info("Request data",
 				zap.Int("size", responseData.size),
 				zap.Int("status", responseData.status),
 			)
 		default:
-			logger.Error("Bad request")
+			sugar.Error("Bad request")
 		}
 	})
 }

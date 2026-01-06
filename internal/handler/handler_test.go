@@ -48,7 +48,7 @@ func TestHandle(t *testing.T) {
 		Host:          ":8080",
 	}
 	storage := storage.NewStorage()
-	file := file.NewFiles()
+	file := file.NewURLRecord(&cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hand := NewHandler(storage, &cfg, file)
@@ -116,7 +116,7 @@ func TestPostReqJSON(t *testing.T) {
 		Host:          ":8080",
 	}
 	storage := storage.NewStorage()
-	file := file.NewFiles()
+	file := file.NewURLRecord(&cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewHandler(storage, &cfg, file)

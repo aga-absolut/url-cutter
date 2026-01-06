@@ -6,16 +6,19 @@ import (
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/aga-absolut/url-cutter/internal/config"
 )
 
-type Files struct {
+type URLRecord struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+	config      config.Config
 }
 
-func NewFiles() *Files {
-	return &Files{}
+func NewURLRecord(cfg *config.Config) *URLRecord {
+	return &URLRecord{config: *cfg}
 }
 
 func UpdateCounter() (string, error) {
@@ -37,12 +40,12 @@ func UpdateCounter() (string, error) {
 	return counter, nil
 }
 
-func (f *Files) Save(filename, shortURL, originalURL string) error {
+func (f *URLRecord) Save(shortURL, originalURL string) error {
 	counter, err := UpdateCounter()
 	if err != nil {
 		return err
 	}
-	data := Files{
+	data := URLRecord{
 		UUID:        counter,
 		ShortURL:    shortURL,
 		OriginalURL: originalURL,
@@ -52,7 +55,7 @@ func (f *Files) Save(filename, shortURL, originalURL string) error {
 		return err
 	}
 	result = append(result, '\n')
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	file, err := os.OpenFile(f.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}
@@ -63,8 +66,8 @@ func (f *Files) Save(filename, shortURL, originalURL string) error {
 	return nil
 }
 
-func (f *Files) ReadFile(filename, shortURL string) (string, bool) {
-	file, err := os.Open(filename)
+func (f *URLRecord) ReadFile(shortURL string) (string, bool) {
+	file, err := os.Open(f.config.FilePath)
 	if err != nil {
 		return "", false
 	}
@@ -75,7 +78,7 @@ func (f *Files) ReadFile(filename, shortURL string) (string, bool) {
 			continue
 		}
 
-		var data Files
+		var data URLRecord
 		if err := json.Unmarshal([]byte(line), &data); err != nil {
 			log.Printf("Error parcing line: %v", err)
 			continue

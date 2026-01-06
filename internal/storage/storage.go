@@ -6,18 +6,18 @@ type Storage interface {
 }
 
 type MapStorage struct {
-	Data map[string]string
+	data map[string]string
 }
 
 func NewStorage() *MapStorage {
-	return &MapStorage{Data: make(map[string]string)}
+	return &MapStorage{data: make(map[string]string)}
 }
 
 func (s *MapStorage) Set(shortURL, longURL string) {
-	s.Data[shortURL] = longURL
+	s.data[shortURL] = longURL
 }
 
 func (s *MapStorage) Get(shortURL string) (string, bool) {
-	str, exist := s.Data[shortURL]
+	str, exist := s.data[shortURL]
 	return str, exist
 }

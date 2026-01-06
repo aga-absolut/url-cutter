@@ -33,14 +33,14 @@ type JSONResponse struct {
 type Handler struct {
 	storage storage.MapStorage
 	config  config.Config
-	file    file.Files
+	file    file.URLRecord
 }
 
-func NewHandler(st *storage.MapStorage, cfg *config.Config, file *file.Files) *Handler {
+func NewHandler(st *storage.MapStorage, cfg *config.Config, file *file.URLRecord) *Handler {
 	handler := &Handler{
 		storage: *st,
 		config:  *cfg,
-		file: *file,
+		file:    *file,
 	}
 	return handler
 }
@@ -54,7 +54,7 @@ func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
 
 	shortURL := Generate()
 	h.storage.Set(shortURL, string(originalURL))
-	h.file.Save(h.config.Storage, shortURL, string(originalURL))
+	h.file.Save(shortURL, string(originalURL))
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -76,7 +76,7 @@ func (h *Handler) HandlerJSON(w http.ResponseWriter, r *http.Request) {
 
 	shortURL := Generate()
 	h.storage.Set(shortURL, js.URL)
-	h.file.Save(h.config.Storage, shortURL, js.URL)
+	h.file.Save(shortURL, js.URL)
 
 	if !strings.HasSuffix(h.config.ServerAddress, "/") {
 		h.config.ServerAddress = h.config.ServerAddress + "/"
@@ -102,10 +102,10 @@ func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
 	if resURL, err := h.storage.Get(path); err {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	} else if resURL, err := h.file.ReadFile(h.config.Storage, path); err {
+	} else if resURL, err := h.file.ReadFile(path); err {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	}else{
+	} else {
 		http.Error(w, "Not found", http.StatusNotFound)
 	}
 }
