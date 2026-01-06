@@ -11,7 +11,7 @@ import (
 type Files struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
-	OriginalUrl string `json:"original_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 func NewFiles() *Files {
@@ -34,7 +34,7 @@ func UpdateCounter() (string, error) {
 	return counter, nil
 }
 
-func (f *Files) Save(filename, shortURL, originalUrl string) error {
+func (f *Files) Save(filename, shortURL, originalURL string) error {
 	counter, err := UpdateCounter()
 	if err != nil{
 		return err
@@ -42,7 +42,7 @@ func (f *Files) Save(filename, shortURL, originalUrl string) error {
 	data := Files{
 		UUID:        counter,
 		ShortURL:    shortURL,
-		OriginalUrl: originalUrl,
+		OriginalURL: originalURL,
 	}
 	result, err := json.Marshal(data)
 	if err != nil {
@@ -79,7 +79,7 @@ func (f *Files) ReadFile(filename, shortURL string) (string, bool) {
 		}
 
 		if data.ShortURL == shortURL {
-			return data.OriginalUrl, true
+			return data.OriginalURL, true
 		}
 
 	}
