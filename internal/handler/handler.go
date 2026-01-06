@@ -46,15 +46,15 @@ func NewHandler(st *storage.MapStorage, cfg *config.Config, file *file.Files) *H
 }
 
 func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
-	originalUrl, err := io.ReadAll(r.Body)
+	originalURL, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	shortURL := Generate()
-	h.storage.Set(shortURL, string(originalUrl))
-	h.file.Save(h.config.Storage, shortURL, string(originalUrl))
+	h.storage.Set(shortURL, string(originalURL))
+	h.file.Save(h.config.Storage, shortURL, string(originalURL))
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
