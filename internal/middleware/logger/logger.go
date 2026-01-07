@@ -44,36 +44,27 @@ func NewLogger() zap.SugaredLogger {
 
 func WithFieldsInfo(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			start := time.Now()
-			uri := r.RequestURI
-			method := r.Method
+		start := time.Now()
 
-			h.ServeHTTP(w, r)
-
-			duration := time.Since(start)
-
-			sugar.Info("Request data",
-				zap.String("URI", uri),
-				zap.String("method", method),
-				zap.Duration("time", duration),
-			)
-
-		case http.MethodGet:
-			responseData := &responseData{}
-			lw := LoggingResponseWriter{
-				ResponseWriter: w,
-				responseData:   responseData,
-			}
-
-			h.ServeHTTP(&lw, r)
-			sugar.Info("Request data",
-				zap.Int("size", responseData.size),
-				zap.Int("status", responseData.status),
-			)
-		default:
-			sugar.Error("Bad request")
+		responseData := &responseData{}
+		lw := LoggingResponseWriter{
+			ResponseWriter: w,
+			responseData:   responseData,
 		}
+
+		h.ServeHTTP(&lw, r)
+
+		duration := time.Since(start)
+
+		sugar.Infoln(
+			"\n",
+			"-----REQUEST-----\n",
+			"URI:", r.RequestURI, "\n",
+			"Method:", r.Method, "\n",
+			"Duration:", duration, "\n",
+			"-----RESPONSE-----\n",
+			"Status:", responseData.status, "\n",
+			"Size:", responseData.size, "\n",
+		)
 	})
 }

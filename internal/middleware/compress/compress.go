@@ -9,11 +9,11 @@ import (
 
 type gzipWriter struct {
 	http.ResponseWriter
-	zw io.Writer
+	zipWriter io.Writer
 }
 
 func (c gzipWriter) Write(p []byte) (int, error) {
-	return c.zw.Write(p)
+	return c.zipWriter.Write(p)
 }
 
 func Compress(h http.HandlerFunc) http.HandlerFunc {
@@ -23,11 +23,11 @@ func Compress(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		zw := gzip.NewWriter(w)
-		defer zw.Close()
+		zipWriter := gzip.NewWriter(w)
+		defer zipWriter.Close()
 
 		w.Header().Set("Content-Encoding", "gzip")
-		h.ServeHTTP(gzipWriter{ResponseWriter: w, zw: zw}, r)
+		h.ServeHTTP(gzipWriter{ResponseWriter: w, zipWriter: zipWriter}, r)
 	}
 }
 
@@ -38,14 +38,14 @@ func Decompress(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		zr, err := gzip.NewReader(r.Body)
+		zipReader, err := gzip.NewReader(r.Body)
 		if err != nil {
 			http.Error(w, "Bad Request: invalid gzip data", http.StatusBadRequest)
 			return
 		}
 
-		r.Body = zr
-		defer zr.Close()
+		r.Body = zipReader
+		defer zipReader.Close()
 		h.ServeHTTP(w, r)
 	}
 }

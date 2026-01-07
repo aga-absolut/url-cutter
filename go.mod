@@ -3,6 +3,7 @@ module github.com/aga-absolut/url-cutter
 go 1.24
 
 require (
+	github.com/caarlos0/env/v11 v11.3.1
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.27.1

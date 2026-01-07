@@ -9,9 +9,9 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/file"
+	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +30,6 @@ func TestHandle(t *testing.T) {
 			postStatusCode: http.StatusCreated,
 			getStatusCode:  http.StatusTemporaryRedirect,
 			contentType:    "text/plain",
-			request:        "http://localhost:8080/",
 			body:           "https://google.com",
 		},
 		{
@@ -38,28 +37,24 @@ func TestHandle(t *testing.T) {
 			postStatusCode: http.StatusCreated,
 			getStatusCode:  http.StatusTemporaryRedirect,
 			contentType:    "text/plain",
-			request:        "http://localhost:8080/",
 			body:           "https://yandex.ru",
 		},
 	}
 
-	cfg := config.Config{
-		ServerAddress: "http://localhost:8080",
-		Host:          ":8080",
-	}
+	cfg := config.NewConfig()
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(&cfg)
+	file := file.NewURLRecord(cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(storage, &cfg, file)
+			hand := NewHandler(storage, cfg, file)
 
 			router := chi.NewRouter()
-			router.Get("/{rf}", hand.ShortGetReq)
-			router.Post("/", hand.ShortPostReq)
+			router.Get("/{id}", hand.GetHandler)
+			router.Post("/", hand.PostHandler)
 
 			//----------------------------------------Post request
 
-			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
@@ -79,7 +74,7 @@ func TestHandle(t *testing.T) {
 
 			//----------------------------------------Get request
 
-			req = httptest.NewRequest(http.MethodGet, tt.request+shortURL, nil)
+			req = httptest.NewRequest(http.MethodGet, cfg.ServerAddress+shortURL, nil)
 			w = httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
@@ -87,10 +82,8 @@ func TestHandle(t *testing.T) {
 			r = w.Result()
 			defer r.Body.Close()
 
-			assert.Equal(t, r.StatusCode, tt.getStatusCode)
-
-			location := r.Header.Get("Location")
-			assert.Equal(t, location, tt.body)
+			assert.Equal(t, tt.getStatusCode, r.StatusCode)
+			assert.Equal(t, tt.body, r.Header.Get("Location"))
 		})
 	}
 }
@@ -111,19 +104,15 @@ func TestPostReqJSON(t *testing.T) {
 			body:        `{"url": "https://yandex.ru"}`,
 		},
 	}
-	cfg := config.Config{
-		ServerAddress: "http://localhost:8080",
-		Host:          ":8080",
-	}
+	cfg := config.NewConfig()
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(&cfg)
+	file := file.NewURLRecord(cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(storage, &cfg, file)
+			handler := NewHandler(storage, cfg, file)
 
 			router := chi.NewRouter()
-			router.Use(middleware.CleanPath)
-			router.Post("/api/shorten", handler.HandlerJSON)
+			router.Post("/api/shorten", handler.JSONPostHandler)
 
 			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
@@ -132,13 +121,13 @@ func TestPostReqJSON(t *testing.T) {
 			r := w.Result()
 			defer r.Body.Close()
 
-			assert.Equal(t, r.StatusCode, tt.statusCode)
-			assert.Equal(t, r.Header.Get("Content-Type"), tt.contentType)
+			assert.Equal(t, tt.statusCode, r.StatusCode)
+			assert.Equal(t, tt.contentType, r.Header.Get("Content-Type"))
 
 			body := w.Body.String()
 			assert.Contains(t, body, `"result"`, "answer must have a result")
 
-			var resp JSONResponse
+			resp := model.JSONResponse{}
 			err := json.Unmarshal(w.Body.Bytes(), &resp)
 			assert.NoError(t, err, "Failed to conver to Json")
 		})
