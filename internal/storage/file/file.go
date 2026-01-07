@@ -7,21 +7,15 @@ import (
 	"strconv"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/model"
 	"go.uber.org/zap"
 )
 
-type (
-	JSONStructForFile struct {
-		UUID        string `json:"uuid"`
-		ShortURL    string `json:"short_url"`
-		OriginalURL string `json:"original_url"`
-	}
-	File struct {
-		UUID   int
-		config *config.Config
-		logger zap.SugaredLogger
-	}
-)
+type File struct {
+	UUID   int
+	config *config.Config
+	logger zap.SugaredLogger
+}
 
 func NewFile(config *config.Config, logger zap.SugaredLogger) *File {
 	return &File{config: config, logger: logger}
@@ -50,7 +44,7 @@ func (f *File) Save(shortURL, originalURL string) error {
 	f.UUID++
 	UUID := strconv.Itoa(f.UUID)
 
-	data := JSONStructForFile{
+	data := model.JSONStructForFile{
 		UUID:        UUID,
 		ShortURL:    shortURL,
 		OriginalURL: originalURL,
@@ -87,7 +81,7 @@ func (f *File) ReadFile(shortURL string) (string, bool) {
 			continue
 		}
 
-		var data JSONStructForFile
+		var data model.JSONStructForFile
 		if err := json.Unmarshal([]byte(line), &data); err != nil {
 			f.logger.Errorw("Error parcing line:", "Error", err)
 			continue

@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
-	"github.com/aga-absolut/url-cutter/internal/file"
-	"github.com/aga-absolut/url-cutter/internal/middleware/logger"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/storage/file"
+	storage "github.com/aga-absolut/url-cutter/internal/storage/memory"
+	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
@@ -48,7 +48,7 @@ func TestHandle(t *testing.T) {
 	}
 	log := logger.NewLogger()
 	storage := storage.NewStorage()
-	file := file.NewFile(&cfg,log)
+	file := file.NewFile(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hand := NewHandler(storage, &cfg, file)
@@ -114,7 +114,7 @@ func TestPostReqJSON(t *testing.T) {
 	}
 	log := logger.NewLogger()
 	storage := storage.NewStorage()
-	file := file.NewFile(&cfg,log)
+	file := file.NewFile(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewHandler(storage, &cfg, file)

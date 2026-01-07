@@ -7,19 +7,19 @@ import (
 	"net/http"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
-	"github.com/aga-absolut/url-cutter/internal/file"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/storage/file"
+	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	storage *storage.MapStorage
+	storage *memory.MemoryStorage
 	config  *config.Config
 	file    *file.File
 }
 
-func NewHandler(storage *storage.MapStorage, config *config.Config, file *file.File) *Handler {
+func NewHandler(storage *memory.MemoryStorage, config *config.Config, file *file.File) *Handler {
 	handler := &Handler{
 		storage: storage,
 		config:  config,

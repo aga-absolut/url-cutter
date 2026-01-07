@@ -7,4 +7,8 @@ type JSONResponse struct {
 	Result string `json:"result"`
 }
 
-// может лучще куда-то в storage их убрать? или еще куда-то
+type JSONStructForFile struct {
+	UUID        string `json:"uuid"`
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
