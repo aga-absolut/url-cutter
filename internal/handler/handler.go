@@ -64,7 +64,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	h.storage.Set(shortURL, JSONRequest.URL)
 	h.file.Save(shortURL, JSONRequest.URL)
 
-	JSONResponse := model.JSONResponse{Result: h.config.Host + shortURL}
+	JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortURL}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
