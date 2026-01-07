@@ -13,7 +13,7 @@ type Config struct {
 	Symbols       []byte
 }
 
-func NewConfig() Config {
+func NewConfig() *Config {
 	var cfg Config
 	cfg.Symbols = []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM")
 	if err := env.Parse(&cfg); err != nil {
@@ -21,7 +21,7 @@ func NewConfig() Config {
 	}
 
 	if cfg.Host != "" && cfg.ServerAddress != "" {
-		return cfg
+		return &cfg
 	}
 	if cfg.FilePath == "" {
 		flag.StringVar(&cfg.FilePath, "f", "storage.txt", "path to file")
@@ -31,5 +31,5 @@ func NewConfig() Config {
 	flag.StringVar(&cfg.ServerAddress, "b", "http://localhost:8080/", "base URL for shortened links")
 	flag.StringVar(&cfg.FilePath, "f", "storage.txt", "storage filename")
 
-	return cfg
+	return &cfg
 }

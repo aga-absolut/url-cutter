@@ -16,8 +16,8 @@ func main() {
 	config := config.NewConfig()
 	logger := logger.NewLogger()
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(config)
-	handler := handler.NewHandler(storage, config, file)
+	file := file.NewURLRecord(*config)
+	handler := handler.NewHandler(storage, *config, file)
 	router := router.NewRouter(handler)
 
 	logger.Infow("Starting server", "addr", config.ServerAddress)
