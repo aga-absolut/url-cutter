@@ -1,20 +1,27 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/handler"
 	"github.com/aga-absolut/url-cutter/internal/router"
-	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/storage/file"
+	storage "github.com/aga-absolut/url-cutter/internal/storage/memory"
+	"github.com/aga-absolut/url-cutter/middleware/logger"
 )
 
 func main() {
-	cfg := config.NewConfig()
+	config := config.NewConfig()
+	logger := logger.NewLogger()
 	storage := storage.NewStorage()
-	handler := handler.NewHandler(storage, cfg)
+	file := file.NewFile(config, logger)
+	handler := handler.NewHandler(storage, config, file)
 	router := router.NewRouter(handler)
- 	log.Fatal(http.ListenAndServe(cfg.Host, router))
 
+	logger.Infow("Starting server", "addr", config.ServerAddress)
+	err := http.ListenAndServe(config.ServerAddress, router)
+	if err != nil {
+		logger.Fatalw("Server did't start", "Error", err)
+	}
 }

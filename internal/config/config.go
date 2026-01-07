@@ -2,37 +2,28 @@ package config
 
 import (
 	"flag"
-	"os"
-	"strings"
+
+	"github.com/caarlos0/env/v11"
 )
 
 type Config struct {
-	ServerAddress string `env:"BASE_URL"`
-	Host          string `env:"SERVER_ADDRESS"`
+	ServerAddress string `env:"SERVER_ADDRESS"`
+	Host          string `env:"BASE_URL"`
+	FilePath      string `env:"FILE_STORAGE_PATH"`
+	Symbols       []byte
 }
 
 func NewConfig() *Config {
 	cfg := &Config{}
+	cfg.Symbols = []byte("QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
 
-	flag.StringVar(&cfg.Host, "a", ":8080", "server host:port to listen on")
-	flag.StringVar(&cfg.ServerAddress, "b", "http://localhost:8080", "base URL for shortened links")
-
+	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "server host:port")
+	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")
+	flag.StringVar(&cfg.FilePath, "f", "storage.txt", "storage filename")
 	flag.Parse()
 
-	if envHost := os.Getenv("SERVER_ADDRESS"); envHost != "" {
-		cfg.Host = envHost
+	if err := env.Parse(cfg); err != nil {
+		panic(err)
 	}
-	if envAddress := os.Getenv("BASE_URL"); envAddress != "" {	
-		envAddress = strings.Replace(envAddress, "http//" , "http://" , 1)
-
-		if !strings.HasPrefix(envAddress, "http://"){
-			cfg.ServerAddress = "http://" + envAddress
-		}
-		
-		if !strings.HasSuffix(envAddress, "/"){
-			cfg.ServerAddress = envAddress + "/"
-		}
-	}
-
 	return cfg
 }

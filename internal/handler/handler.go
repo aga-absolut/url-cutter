@@ -1,73 +1,85 @@
 package handler
 
 import (
+	"encoding/json"
 	"io"
 	"math/rand/v2"
 	"net/http"
-	"strings"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
-	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/model"
+	"github.com/aga-absolut/url-cutter/internal/storage/file"
+	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/go-chi/chi/v5"
 )
 
-var Symbols = []rune("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM")
-
-// var Storage = make(map[string]string)
-
-func Generate() string {
-	res := make([]rune, 8)
-	for i := range res {
-		res[i] = Symbols[rand.IntN(len(Symbols))]
-	}
-	return string(res)
-}
-
 type Handler struct {
-	storage storage.MapStorage
-	config  config.Config
+	storage *memory.MemoryStorage
+	config  *config.Config
+	file    *file.File
 }
 
-func NewHandler(st *storage.MapStorage, cfg *config.Config) *Handler {
+func NewHandler(storage *memory.MemoryStorage, config *config.Config, file *file.File) *Handler {
 	handler := &Handler{
-		storage: *st,
-		config:  *cfg,
+		storage: storage,
+		config:  config,
+		file:    file,
 	}
 	return handler
 }
 
-func (h *Handler) ShortPostReq(w http.ResponseWriter, r *http.Request) {
-	resp, err := io.ReadAll(r.Body)
+func (h Handler) generate() string {
+	res := make([]byte, 8)
+	for i := range res {
+		res[i] = h.config.Symbols[rand.IntN(len(h.config.Symbols))]
+	}
+	return string(res)
+}
+
+func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
+	originalURL, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	shortURL := Generate()
-	h.storage.Set(string(resp), shortURL)
+	shortURL := h.generate()
+	h.storage.Set(shortURL, string(originalURL))
+	h.file.Save(shortURL, string(originalURL))
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-
-	if !strings.HasSuffix(h.config.ServerAddress, "/"){
-		h.config.ServerAddress = h.config.ServerAddress + "/"
-	}
-	
-	w.Write([]byte(h.config.ServerAddress + shortURL))
+	w.Write([]byte(h.config.Host + "/" + shortURL))
 }
 
-func (h *Handler) ShortGetReq(w http.ResponseWriter, r *http.Request) {
-	path := chi.URLParam(r, "rf")
-
-	if path == "" {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
+	JSONRequest := model.JSONRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&JSONRequest); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
 
-	if resURL, err := h.storage.Get(path);err {
+	shortURL := h.generate()
+	h.storage.Set(shortURL, JSONRequest.URL)
+	h.file.Save(shortURL, JSONRequest.URL)
+
+	JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortURL}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(JSONResponse); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
+	shortURL := chi.URLParam(r, "id")
+	if resURL, exist := h.storage.Get(shortURL); exist {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	}else {
+	} else {
 		http.Error(w, "Not found", http.StatusNotFound)
 	}
 }
