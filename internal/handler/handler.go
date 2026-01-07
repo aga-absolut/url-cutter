@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand/v2"
 	"net/http"
@@ -49,7 +50,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(h.config.ServerAddress + shortURL))
+	fmt.Fprintf(w, "%s/%s", h.config.Host, shortURL)
 }
 
 func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +80,7 @@ func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	if resURL, exist := h.storage.Get(shortURL); exist {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	}else {
+	} else {
 		http.Error(w, "Not found", http.StatusNotFound)
 	}
 }
