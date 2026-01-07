@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"math/rand/v2"
 	"net/http"
@@ -50,7 +49,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(w, "%s/%s", h.config.Host, shortURL)
+	w.Write([]byte(h.config.ServerAddress + "/" + shortURL))
 }
 
 func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
