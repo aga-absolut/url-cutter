@@ -49,7 +49,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(h.config.ServerAddress + "/" + shortURL))
+	w.Write([]byte(h.config.Host + "/" + shortURL))
 }
 
 func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +64,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	h.storage.Set(shortURL, JSONRequest.URL)
 	h.file.Save(shortURL, JSONRequest.URL)
 
-	JSONResponse := model.JSONResponse{Result: h.config.ServerAddress + shortURL}
+	JSONResponse := model.JSONResponse{Result: h.config.Host + shortURL}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)

@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	ServerAddress string `env:"BASE_URL"`
-	Host          string `env:"SERVER_ADDRESS"`
+	ServerAddress string `env:"SERVER_ADDRESS"`
+	Host          string `env:"BASE_URL"`
 	FilePath      string `env:"FILE_STORAGE_PATH"`
 	Symbols       []byte
 }
@@ -16,9 +16,9 @@ type Config struct {
 func NewConfig() *Config {
 	cfg := &Config{}
 	cfg.Symbols = []byte("QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
-	
-	flag.StringVar(&cfg.Host, "a", ":8080", "server host:port")
-	flag.StringVar(&cfg.ServerAddress, "b", "http://localhost:8080/", "base URL")
+
+	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "server host:port")
+	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")
 	flag.StringVar(&cfg.FilePath, "f", "storage.txt", "storage filename")
 	flag.Parse()
 

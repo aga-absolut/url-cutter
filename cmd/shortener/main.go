@@ -21,5 +21,5 @@ func main() {
 	router := router.NewRouter(handler)
 
 	logger.Infow("Starting server", "addr", config.ServerAddress)
-	log.Fatal(http.ListenAndServe(config.Host, router))
+	log.Fatal(http.ListenAndServe(config.ServerAddress, router))
 }
