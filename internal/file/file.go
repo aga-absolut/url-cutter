@@ -17,8 +17,8 @@ type URLRecord struct {
 	config      config.Config
 }
 
-func NewURLRecord(cfg *config.Config) *URLRecord {
-	return &URLRecord{config: *cfg}
+func NewURLRecord(cfg config.Config) *URLRecord {
+	return &URLRecord{config: cfg}
 }
 
 func UpdateCounter() (string, error) {
