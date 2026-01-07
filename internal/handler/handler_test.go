@@ -46,10 +46,10 @@ func TestHandle(t *testing.T) {
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(cfg)
+	file := file.NewURLRecord(&cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(storage, cfg, file)
+			hand := NewHandler(storage, &cfg, file)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -111,10 +111,10 @@ func TestPostReqJSON(t *testing.T) {
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(cfg)
+	file := file.NewURLRecord(&cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(storage, cfg, file)
+			handler := NewHandler(storage, &cfg, file)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)
