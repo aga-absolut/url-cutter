@@ -41,12 +41,15 @@ func TestHandle(t *testing.T) {
 		},
 	}
 
-	cfg := config.NewConfig()
+	cfg := config.Config{
+		ServerAddress: "http://localhost:8080/",
+		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
+	}
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(cfg)
+	file := file.NewURLRecord(&cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(storage, cfg, file)
+			hand := NewHandler(storage, &cfg, file)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -100,21 +103,23 @@ func TestPostReqJSON(t *testing.T) {
 			name:        "first simple test",
 			statusCode:  http.StatusCreated,
 			contentType: "application/json",
-			request:     "http://localhost:8080/api/shorten",
 			body:        `{"url": "https://yandex.ru"}`,
 		},
 	}
-	cfg := config.NewConfig()
+	cfg := config.Config{
+		ServerAddress: "http://localhost:8080/api/shorten",
+		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
+	}
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(cfg)
+	file := file.NewURLRecord(&cfg)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(storage, cfg, file)
+			handler := NewHandler(storage, &cfg, file)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)
 
-			req := httptest.NewRequest(http.MethodPost, tt.request, strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
 			w := httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
