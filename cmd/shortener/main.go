@@ -16,7 +16,7 @@ func main() {
 	config := config.NewConfig()
 	logger := logger.NewLogger()
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(config)
+	file := file.NewFile(config, logger)
 	handler := handler.NewHandler(storage, config, file)
 	router := router.NewRouter(handler)
 

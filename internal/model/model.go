@@ -6,4 +6,5 @@ type JSONRequest struct {
 type JSONResponse struct {
 	Result string `json:"result"`
 }
-//может лучще куда-то в storage их убрать? или еще куда-то
+
+// может лучще куда-то в storage их убрать? или еще куда-то

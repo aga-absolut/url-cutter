@@ -16,10 +16,10 @@ import (
 type Handler struct {
 	storage *storage.MapStorage
 	config  *config.Config
-	file    *file.URLRecord
+	file    *file.File
 }
 
-func NewHandler(storage *storage.MapStorage, config *config.Config, file *file.URLRecord) *Handler {
+func NewHandler(storage *storage.MapStorage, config *config.Config, file *file.File) *Handler {
 	handler := &Handler{
 		storage: storage,
 		config:  config,

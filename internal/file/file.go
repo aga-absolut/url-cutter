@@ -3,22 +3,28 @@ package file
 import (
 	"bufio"
 	"encoding/json"
-	"log"
 	"os"
 	"strconv"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"go.uber.org/zap"
 )
 
-type URLRecord struct {
-	UUID        string `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-	config      config.Config
-}
+type (
+	JSONStructForFile struct {
+		UUID        string `json:"uuid"`
+		ShortURL    string `json:"short_url"`
+		OriginalURL string `json:"original_url"`
+	}
+	File struct {
+		UUID   int
+		config *config.Config
+		logger zap.SugaredLogger
+	}
+)
 
-func NewURLRecord(cfg *config.Config) *URLRecord {
-	return &URLRecord{config: *cfg}
+func NewFile(config *config.Config, logger zap.SugaredLogger) *File {
+	return &File{config: config, logger: logger}
 }
 
 func UpdateCounter() (string, error) {
@@ -40,35 +46,38 @@ func UpdateCounter() (string, error) {
 	return counter, nil
 }
 
-func (f *URLRecord) Save(shortURL, originalURL string) error {
-	counter, err := UpdateCounter()
-	if err != nil {
-		return err
-	}
-	data := URLRecord{
-		UUID:        counter,
+func (f *File) Save(shortURL, originalURL string) error {
+	f.UUID++
+	UUID := strconv.Itoa(f.UUID)
+
+	data := JSONStructForFile{
+		UUID:        UUID,
 		ShortURL:    shortURL,
 		OriginalURL: originalURL,
 	}
 	result, err := json.Marshal(data)
 	if err != nil {
+		f.logger.Errorw("Error marshal file:", "Error", shortURL)
 		return err
 	}
 	result = append(result, '\n')
 	file, err := os.OpenFile(f.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
+		f.logger.Errorw("Error open file:", "Error", shortURL)
 		return err
 	}
 	defer file.Close()
 	if _, err = file.Write(result); err != nil {
+		f.logger.Errorw("Error write file:", "Error", shortURL)
 		return err
 	}
 	return nil
 }
 
-func (f *URLRecord) ReadFile(shortURL string) (string, bool) {
+func (f *File) ReadFile(shortURL string) (string, bool) {
 	file, err := os.Open(f.config.FilePath)
 	if err != nil {
+		f.logger.Errorw("Error open file:", "Error", shortURL)
 		return "", false
 	}
 	scanner := bufio.NewScanner(file)
@@ -78,19 +87,20 @@ func (f *URLRecord) ReadFile(shortURL string) (string, bool) {
 			continue
 		}
 
-		var data URLRecord
+		var data JSONStructForFile
 		if err := json.Unmarshal([]byte(line), &data); err != nil {
-			log.Printf("Error parcing line: %v", err)
+			f.logger.Errorw("Error parcing line:", "Error", err)
 			continue
 		}
 
 		if data.ShortURL == shortURL {
+			f.logger.Infow("Succes work shorURL:", "URL", shortURL)
 			return data.OriginalURL, true
 		}
 
 	}
 	if err := scanner.Err(); err != nil {
-		log.Printf("Error parcing file: %v", err)
+		f.logger.Errorw("Error parcing file:", "Error", err)
 	}
 	return "", false
 }

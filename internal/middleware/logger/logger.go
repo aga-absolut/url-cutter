@@ -15,19 +15,19 @@ type (
 		status int
 	}
 
-	LoggingResponseWriter struct {
+	Logger struct {
 		http.ResponseWriter
 		responseData *responseData
 	}
 )
 
-func (r *LoggingResponseWriter) Write(b []byte) (int, error) {
+func (r *Logger) Write(b []byte) (int, error) {
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size
 	return size, err
 }
 
-func (r *LoggingResponseWriter) WriteHeader(statuscode int) {
+func (r *Logger) WriteHeader(statuscode int) {
 	r.ResponseWriter.WriteHeader(statuscode)
 	r.responseData.status = statuscode
 }
@@ -47,7 +47,7 @@ func WithFieldsInfo(h http.Handler) http.Handler {
 		start := time.Now()
 
 		responseData := &responseData{}
-		lw := LoggingResponseWriter{
+		lw := Logger{
 			ResponseWriter: w,
 			responseData:   responseData,
 		}

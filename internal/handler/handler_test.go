@@ -9,6 +9,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/file"
+	"github.com/aga-absolut/url-cutter/internal/middleware/logger"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -45,8 +46,9 @@ func TestHandle(t *testing.T) {
 		ServerAddress: "http://localhost:8080/",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
+	log := logger.NewLogger()
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(&cfg)
+	file := file.NewFile(&cfg,log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hand := NewHandler(storage, &cfg, file)
@@ -110,8 +112,9 @@ func TestPostReqJSON(t *testing.T) {
 		ServerAddress: "http://localhost:8080/api/shorten",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
+	log := logger.NewLogger()
 	storage := storage.NewStorage()
-	file := file.NewURLRecord(&cfg)
+	file := file.NewFile(&cfg,log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewHandler(storage, &cfg, file)
