@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,13 +10,12 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"github.com/aga-absolut/url-cutter/internal/storage/file"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHandle(t *testing.T) {
@@ -48,10 +48,7 @@ func TestHandle(t *testing.T) {
 		ServerAddress: "http://localhost:8080/",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
-	db, err := database.ConnectDB(&cfg)
-	if err != nil {
-		panic(err)
-	}
+	var db *sql.DB = nil
 	log := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
 	file := file.NewFile(&cfg, log)
@@ -118,10 +115,7 @@ func TestPostReqJSON(t *testing.T) {
 		ServerAddress: "http://localhost:8080/api/shorten",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
-	db, err := database.ConnectDB(&cfg)
-	if err != nil {
-		panic(err)
-	}
+	var db *sql.DB = nil
 	log := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
 	file := file.NewFile(&cfg, log)
