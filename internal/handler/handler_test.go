@@ -15,6 +15,7 @@ import (
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func TestHandle(t *testing.T) {
