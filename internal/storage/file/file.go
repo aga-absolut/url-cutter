@@ -40,7 +40,7 @@ func UpdateCounter() (string, error) {
 	return counter, nil
 }
 
-func (f *File) Save(shortURL, originalURL string) error {
+func (f *File) Set(shortURL, originalURL string) error {
 	f.UUID++
 	UUID := strconv.Itoa(f.UUID)
 
@@ -68,7 +68,7 @@ func (f *File) Save(shortURL, originalURL string) error {
 	return nil
 }
 
-func (f *File) ReadFile(shortURL string) (string, bool) {
+func (f *File) Get(shortURL string) (string, bool) {
 	file, err := os.Open(f.config.FilePath)
 	if err != nil {
 		f.logger.Errorw("Error open file:", "Error", shortURL)

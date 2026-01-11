@@ -9,8 +9,9 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
+	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"github.com/aga-absolut/url-cutter/internal/storage/file"
-	storage "github.com/aga-absolut/url-cutter/internal/storage/memory"
+	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -46,12 +47,16 @@ func TestHandle(t *testing.T) {
 		ServerAddress: "http://localhost:8080/",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
+	db, err := database.ConnectDB(&cfg)
+	if err != nil {
+		panic(err)
+	}
 	log := logger.NewLogger()
-	storage := storage.NewStorage()
+	storage := memory.NewMemoryStorage()
 	file := file.NewFile(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(storage, &cfg, file)
+			hand := NewHandler(storage, &cfg, file, db)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -112,12 +117,16 @@ func TestPostReqJSON(t *testing.T) {
 		ServerAddress: "http://localhost:8080/api/shorten",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
+	db, err := database.ConnectDB(&cfg)
+	if err != nil {
+		panic(err)
+	}
 	log := logger.NewLogger()
-	storage := storage.NewStorage()
+	storage := memory.NewMemoryStorage()
 	file := file.NewFile(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(storage, &cfg, file)
+			handler := NewHandler(storage, &cfg, file, db)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)

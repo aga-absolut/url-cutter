@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"io"
 	"math/rand/v2"
@@ -14,16 +15,18 @@ import (
 )
 
 type Handler struct {
-	storage *memory.MemoryStorage
-	config  *config.Config
-	file    *file.File
+	memory *memory.MemoryStorage
+	config *config.Config
+	file   *file.File
+	db     *sql.DB
 }
 
-func NewHandler(storage *memory.MemoryStorage, config *config.Config, file *file.File) *Handler {
+func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, db *sql.DB) *Handler {
 	handler := &Handler{
-		storage: storage,
-		config:  config,
-		file:    file,
+		memory: memory,
+		config: config,
+		file:   file,
+		db:     db,
 	}
 	return handler
 }
@@ -36,6 +39,14 @@ func (h Handler) generate() string {
 	return string(res)
 }
 
+func (h *Handler) GetPingHandler(w http.ResponseWriter, r *http.Request) {
+	if err := h.db.Ping(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	originalURL, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -44,8 +55,8 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortURL := h.generate()
-	h.storage.Set(shortURL, string(originalURL))
-	h.file.Save(shortURL, string(originalURL))
+	h.memory.Set(shortURL, string(originalURL))
+	h.file.Set(shortURL, string(originalURL))
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -61,8 +72,8 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	shortURL := h.generate()
-	h.storage.Set(shortURL, JSONRequest.URL)
-	h.file.Save(shortURL, JSONRequest.URL)
+	h.memory.Set(shortURL, JSONRequest.URL)
+	h.file.Set(shortURL, JSONRequest.URL)
 
 	JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortURL}
 
@@ -76,7 +87,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "id")
-	if resURL, exist := h.storage.Get(shortURL); exist {
+	if resURL, exist := h.memory.Get(shortURL); exist {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
