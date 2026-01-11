@@ -11,7 +11,7 @@ import (
 func ConnectDB(config *config.Config) (*sql.DB, error) {
 	ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 		`localhost`, `postgres`, `absolute_1`, `mydb`)
-	db, err := sql.Open(config.DbDSN, ps)
+	db, err := sql.Open(config.DBDSN, ps)
 	if err != nil {
 		return nil, err
 	}

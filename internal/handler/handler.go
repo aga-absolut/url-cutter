@@ -12,6 +12,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/storage/file"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type Handler struct {
