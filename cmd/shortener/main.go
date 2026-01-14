@@ -17,7 +17,7 @@ func main() {
 	config := config.NewConfig()
 	logger := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
-	db := database.NewDBPostgreSQl(config)
+	db := database.NewDBPostgreSQL(config)
 	file := file.NewFile(config, logger)
 	handler := handler.NewHandler(storage, config, file, db)
 	router := router.NewRouter(handler)

@@ -7,17 +7,17 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-type DBPostgreSQl struct {
+type DBPostgreSQL struct {
 	shortURL    string
 	originalURL string
 	config      *config.Config
 }
 
-func NewDBPostgreSQl(config *config.Config) *DBPostgreSQl {
-	return &DBPostgreSQl{config: config}
+func NewDBPostgreSQL(config *config.Config) *DBPostgreSQL {
+	return &DBPostgreSQL{config: config}
 }
 
-func (s *DBPostgreSQl) Set(shortURL, originalURL string) error {
+func (s *DBPostgreSQL) Set(shortURL, originalURL string) error {
 	db, err := sql.Open("pgx", s.config.DBDSN)
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func (s *DBPostgreSQl) Set(shortURL, originalURL string) error {
 	return nil
 }
 
-func (s *DBPostgreSQl) Get(shortURL string) (string, bool) {
+func (s *DBPostgreSQL) Get(shortURL string) (string, bool) {
 	db, err := sql.Open("pgx", s.config.DBDSN)
 	if err != nil {
 		return "", false

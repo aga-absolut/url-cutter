@@ -20,10 +20,10 @@ type Handler struct {
 	memory *memory.MemoryStorage
 	config *config.Config
 	file   *file.File
-	db     *database.DBPostgreSQl
+	db     *database.DBPostgreSQL
 }
 
-func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, db *database.DBPostgreSQl) *Handler {
+func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, db *database.DBPostgreSQL) *Handler {
 	handler := &Handler{
 		memory: memory,
 		config: config,

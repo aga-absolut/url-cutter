@@ -48,7 +48,7 @@ func TestHandle(t *testing.T) {
 		ServerAddress: "http://localhost:8080/",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
-	db := database.NewDBPostgreSQl(&cfg)
+	db := database.NewDBPostgreSQL(&cfg)
 	log := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
 	file := file.NewFile(&cfg, log)
@@ -115,7 +115,7 @@ func TestPostReqJSON(t *testing.T) {
 		ServerAddress: "http://localhost:8080/api/shorten",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
-	db := database.NewDBPostgreSQl(&cfg)
+	db := database.NewDBPostgreSQL(&cfg)
 	log := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
 	file := file.NewFile(&cfg, log)
