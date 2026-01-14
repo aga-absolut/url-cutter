@@ -9,6 +9,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
+	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"github.com/aga-absolut/url-cutter/internal/storage/file"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/go-chi/chi/v5"
@@ -19,10 +20,10 @@ type Handler struct {
 	memory *memory.MemoryStorage
 	config *config.Config
 	file   *file.File
-	db     *sql.DB
+	db     *database.DBPostgreSQl
 }
 
-func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, db *sql.DB) *Handler {
+func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, db *database.DBPostgreSQl) *Handler {
 	handler := &Handler{
 		memory: memory,
 		config: config,
@@ -40,10 +41,13 @@ func (h Handler) generate() string {
 	return string(res)
 }
 
-func (h *Handler) GetPingHandler(w http.ResponseWriter, r *http.Request) {
-	if err := h.db.Ping(); err != nil {
+func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open("pgx", h.config.DBDSN)
+	if err != nil {
+		panic(err)
+	}
+	if err := db.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
@@ -58,6 +62,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := h.generate()
 	h.memory.Set(shortURL, string(originalURL))
 	h.file.Set(shortURL, string(originalURL))
+	h.db.Set(shortURL, string(originalURL))
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -75,6 +80,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := h.generate()
 	h.memory.Set(shortURL, JSONRequest.URL)
 	h.file.Set(shortURL, JSONRequest.URL)
+	h.db.Set(shortURL, JSONRequest.URL)
 
 	JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortURL}
 

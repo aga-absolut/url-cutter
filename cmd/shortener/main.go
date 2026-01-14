@@ -17,17 +17,13 @@ func main() {
 	config := config.NewConfig()
 	logger := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
-	db, err := database.ConnectDB(config)
-	if err != nil {
-		logger.Fatalw("Db did't connect", "Error", err)
-	}
-	defer db.Close()
+	db := database.NewDBPostgreSQl(config)
 	file := file.NewFile(config, logger)
 	handler := handler.NewHandler(storage, config, file, db)
 	router := router.NewRouter(handler)
 
 	logger.Infow("Starting server", "addr", config.ServerAddress)
-	err = http.ListenAndServe(config.ServerAddress, router)
+	err := http.ListenAndServe(config.ServerAddress, router)
 	if err != nil {
 		logger.Fatalw("Server did't start", "Error", err)
 	}
