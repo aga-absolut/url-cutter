@@ -10,7 +10,6 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/storage/file"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
-	_ "github.com/jackc/pgx"
 )
 
 func main() {

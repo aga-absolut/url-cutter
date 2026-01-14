@@ -14,7 +14,6 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/assert"
 )
 
