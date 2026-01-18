@@ -8,26 +8,29 @@ import (
 )
 
 type ShotenBatchRequest struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 
 type ShortenResponseItem struct {
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
 }
 type DBPostgreSQL struct {
-	Id          string `json:"correlation_id"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+	ShortURL    string 
+	OriginalURL string 
 	config      *config.Config
 }
 
-func NewDBPostgreSQL(config *config.Config) *sql.DB {
+func ConnectDBPostgreSQL(config *config.Config) *sql.DB {
 	if db, err := sql.Open("pgx", config.DBDSN); err == nil {
 		return db
 	}
 	return nil
+}
+
+func NewDBPostgreSQL(config *config.Config) *DBPostgreSQL {
+	return &DBPostgreSQL{config: config}
 }
 
 func (s *DBPostgreSQL) Set(shortURL, originalURL string) error {

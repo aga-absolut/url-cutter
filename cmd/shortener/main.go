@@ -16,9 +16,10 @@ func main() {
 	config := config.NewConfig()
 	logger := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
-	db := database.NewDBPostgreSQL(config)
+	pgxDB := database.NewDBPostgreSQL(config)
+	db := database.ConnectDBPostgreSQL(config)
 	file := file.NewFile(config, logger)
-	handler := handler.NewHandler(storage, config, file, db)
+	handler := handler.NewHandler(storage, config, file, pgxDB, db)
 	router := router.NewRouter(handler)
 
 	logger.Infow("Starting server", "addr", config.ServerAddress)

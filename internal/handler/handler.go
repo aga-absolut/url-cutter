@@ -20,14 +20,16 @@ type Handler struct {
 	memory *memory.MemoryStorage
 	config *config.Config
 	file   *file.File
+	pgxDB  *database.DBPostgreSQL
 	db     *sql.DB
 }
 
-func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, db *sql.DB) *Handler {
+func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, pgxDB *database.DBPostgreSQL, db *sql.DB) *Handler {
 	handler := &Handler{
 		memory: memory,
 		config: config,
 		file:   file,
+		pgxDB:  pgxDB,
 		db:     db,
 	}
 	return handler
@@ -107,7 +109,7 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		responseItem.ShortURL = h.config.Host + "/" + shortKey
-		responseItem.CorrelationId = v.CorrelationId
+		responseItem.CorrelationID = v.CorrelationID
 		response = append(response, responseItem)
 	}
 

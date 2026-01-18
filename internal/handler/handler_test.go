@@ -47,13 +47,14 @@ func TestHandle(t *testing.T) {
 		ServerAddress: "http://localhost:8080/",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
-	db := database.NewDBPostgreSQL(&cfg)
+	pgxDB := database.NewDBPostgreSQL(&cfg)
+	db := database.ConnectDBPostgreSQL(&cfg)
 	log := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
 	file := file.NewFile(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(storage, &cfg, file, db)
+			hand := NewHandler(storage, &cfg, file, pgxDB, db)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -114,13 +115,14 @@ func TestPostReqJSON(t *testing.T) {
 		ServerAddress: "http://localhost:8080/api/shorten",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
-	db := database.NewDBPostgreSQL(&cfg)
+	pgxDB := database.NewDBPostgreSQL(&cfg)
+	db := database.ConnectDBPostgreSQL(&cfg)
 	log := logger.NewLogger()
 	storage := memory.NewMemoryStorage()
 	file := file.NewFile(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(storage, &cfg, file, db)
+			handler := NewHandler(storage, &cfg, file, pgxDB, db)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)
