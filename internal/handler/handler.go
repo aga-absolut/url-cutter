@@ -60,6 +60,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := h.generate()
 	h.memory.Set(shortURL, string(originalURL))
 	h.file.Set(shortURL, string(originalURL))
+	h.pgxDB.Set(shortURL, string(originalURL))
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -137,6 +138,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := h.generate()
 	h.memory.Set(shortURL, JSONRequest.URL)
 	h.file.Set(shortURL, JSONRequest.URL)
+	h.pgxDB.Set(shortURL, JSONRequest.URL)
 
 	JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortURL}
 
