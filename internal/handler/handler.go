@@ -20,10 +20,10 @@ type Handler struct {
 	memory *memory.MemoryStorage
 	config *config.Config
 	file   *file.File
-	db     *database.DBPostgreSQL
+	db     *sql.DB
 }
 
-func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, db *database.DBPostgreSQL) *Handler {
+func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, db *sql.DB) *Handler {
 	handler := &Handler{
 		memory: memory,
 		config: config,
@@ -42,11 +42,7 @@ func (h Handler) generate() string {
 }
 
 func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
-	db, err := sql.Open("pgx", h.config.DBDSN)
-	if err != nil {
-		panic(err)
-	}
-	if err := db.Ping(); err != nil {
+	if err := h.db.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -62,11 +58,70 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := h.generate()
 	h.memory.Set(shortURL, string(originalURL))
 	h.file.Set(shortURL, string(originalURL))
-	h.db.Set(shortURL, string(originalURL))
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(h.config.Host + "/" + shortURL))
+}
+
+func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
+	var batch []database.ShotenBatchRequest
+	var responseItem database.ShortenResponseItem
+	var response []database.ShortenResponseItem
+
+	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	_, err := h.db.Exec(`
+	CREATE TABLE IF NOT EXISTS urls (
+		short_url TEXT NOT NULL PRIMARY KEY,
+		original_url TEXT NOT NULL
+	);`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	tx, err := h.db.Begin()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	stmt, err := tx.Prepare(`INSERT INTO urls VALUES ($1, $2)`)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for _, v := range batch {
+		shortKey := h.generate()
+		_, err = stmt.Exec(shortKey, v.OriginalURL)
+		if err != nil {
+			tx.Rollback()
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		responseItem.ShortURL = h.config.Host + "/" + shortKey
+		responseItem.CorrelationId = v.CorrelationId
+		response = append(response, responseItem)
+	}
+
+	if err := tx.Commit(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +135,6 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := h.generate()
 	h.memory.Set(shortURL, JSONRequest.URL)
 	h.file.Set(shortURL, JSONRequest.URL)
-	h.db.Set(shortURL, JSONRequest.URL)
 
 	JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortURL}
 

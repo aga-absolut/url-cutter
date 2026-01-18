@@ -7,14 +7,27 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+type ShotenBatchRequest struct {
+	CorrelationId string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type ShortenResponseItem struct {
+	CorrelationId string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
 type DBPostgreSQL struct {
-	shortURL    string
-	originalURL string
+	Id          string `json:"correlation_id"`
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 	config      *config.Config
 }
 
-func NewDBPostgreSQL(config *config.Config) *DBPostgreSQL {
-	return &DBPostgreSQL{config: config}
+func NewDBPostgreSQL(config *config.Config) *sql.DB {
+	if db, err := sql.Open("pgx", config.DBDSN); err == nil {
+		return db
+	}
+	return nil
 }
 
 func (s *DBPostgreSQL) Set(shortURL, originalURL string) error {
@@ -23,11 +36,6 @@ func (s *DBPostgreSQL) Set(shortURL, originalURL string) error {
 		return err
 	}
 	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		return err
-	}
 
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS urls (
