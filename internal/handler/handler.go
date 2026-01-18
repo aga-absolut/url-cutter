@@ -109,8 +109,7 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.memory.Set(shortKey, v.OriginalURL)
-		h.file.Set(shortKey, v.OriginalURL)
-		h.pgxDB.Set(shortKey, v.OriginalURL)
+
 		responseItem.ShortURL = h.config.Host + "/" + shortKey
 		responseItem.CorrelationID = v.CorrelationID
 		response = append(response, responseItem)
