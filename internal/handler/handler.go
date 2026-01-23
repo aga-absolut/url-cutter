@@ -106,9 +106,13 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := h.config.Generate()
 	if shortKey, err := h.storage.Set(shortURL, JSONRequest.URL); err != nil {
 		if errors.Is(err, os.ErrExist) {
-			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
-			w.Write([]byte(h.config.Host + "/" + shortKey))
+			JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortKey}
+			if err := json.NewEncoder(w).Encode(JSONResponse); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			return
 		}
 		w.WriteHeader(http.StatusBadRequest)
