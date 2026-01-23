@@ -1,5 +1,7 @@
 package memory
 
+import "fmt"
+
 type Storage interface {
 	Set(string, string) error
 	Get(string) (string, bool)
@@ -14,6 +16,11 @@ func NewMemoryStorage() *MemoryStorage {
 }
 
 func (s *MemoryStorage) Set(shortURL, originalURL string) error {
+	for _, v := range s.data {
+		if v == originalURL {
+			return fmt.Errorf("Not unique URL.")
+		}
+	}
 	s.data[shortURL] = originalURL
 	return nil
 }

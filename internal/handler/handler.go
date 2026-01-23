@@ -3,6 +3,8 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"math/rand/v2"
 	"net/http"
@@ -13,6 +15,8 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/storage/file"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -58,9 +62,11 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortURL := h.generate()
-	h.memory.Set(shortURL, string(originalURL))
-	h.file.Set(shortURL, string(originalURL))
-	h.pgxDB.Set(shortURL, string(originalURL))
+	if err := h.memory.Set(shortURL, string(originalURL)); err != nil {
+		fmt.Print(err)
+		w.WriteHeader(http.StatusConflict)
+		return
+	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -71,22 +77,12 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	var batch []database.ShotenBatchRequest
 	var responseItem database.ShortenResponseItem
 	var response []database.ShortenResponseItem
-
+//надос делать запрос и если ошибка то тогда вывод 
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
-
-	_, err := h.db.Exec(`
-	CREATE TABLE IF NOT EXISTS urls (
-		short_url TEXT NOT NULL PRIMARY KEY,
-		original_url TEXT NOT NULL
-	);`)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 
 	tx, err := h.db.Begin()
 	if err != nil {
@@ -96,19 +92,27 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	stmt, err := tx.Prepare(`INSERT INTO urls VALUES ($1, $2)`)
 	if err != nil {
+		tx.Rollback()
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	defer stmt.Close()
 
 	for _, v := range batch {
 		shortKey := h.generate()
 		_, err = stmt.Exec(shortKey, v.OriginalURL)
 		if err != nil {
 			tx.Rollback()
+			var PgErr *pgconn.PgError
+			if errors.As(err, &PgErr) {
+				if PgErr.Code == pgerrcode.UniqueViolation {
+					w.WriteHeader(http.StatusConflict)
+					return
+				}
+			}
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		h.memory.Set(shortKey, v.OriginalURL)
 
 		responseItem.ShortURL = h.config.Host + "/" + shortKey
 		responseItem.CorrelationID = v.CorrelationID
@@ -137,9 +141,11 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	shortURL := h.generate()
-	h.memory.Set(shortURL, JSONRequest.URL)
-	h.file.Set(shortURL, JSONRequest.URL)
-	h.pgxDB.Set(shortURL, JSONRequest.URL)
+	if err := h.file.Set(shortURL, string(JSONRequest.URL)); err != nil {
+		fmt.Print(err)
+		w.WriteHeader(http.StatusConflict)
+		return
+	}
 
 	JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortURL}
 
