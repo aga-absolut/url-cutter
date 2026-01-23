@@ -162,6 +162,9 @@ func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	if resURL, exist := h.memory.Get(shortURL); exist {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
+	} else if resURL, exist := h.file.Get(shortURL); exist {
+		w.Header().Set("Location", resURL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
 		http.Error(w, "Not found", http.StatusNotFound)
 	}
