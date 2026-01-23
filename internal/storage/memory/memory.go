@@ -2,11 +2,6 @@ package memory
 
 import "fmt"
 
-type Storage interface {
-	Set(string, string) error
-	Get(string) (string, bool)
-}
-
 type MemoryStorage struct {
 	data map[string]string
 }

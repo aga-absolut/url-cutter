@@ -57,15 +57,6 @@ func (s *DBPostgreSQL) Set(shortURL, originalURL string) error {
 	}
 	defer db.Close()
 
-	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS urls (
-		short_url TEXT NOT NULL PRIMARY KEY,
-		original_url TEXT NOT NULL
-	);`)
-	if err != nil {
-		return err
-	}
-
 	_, err = db.Exec(`INSERT INTO urls VALUES ($1, $2)`, shortURL, originalURL)
 	if err != nil {
 		var PgErr *pgconn.PgError

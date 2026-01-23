@@ -11,9 +11,8 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
+	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/aga-absolut/url-cutter/internal/storage/database"
-	"github.com/aga-absolut/url-cutter/internal/storage/file"
-	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -21,20 +20,16 @@ import (
 )
 
 type Handler struct {
-	memory *memory.MemoryStorage
-	config *config.Config
-	file   *file.File
-	pgxDB  *database.DBPostgreSQL
-	db     *sql.DB
+	config  *config.Config
+	storage storage.Storage
+	db      *sql.DB
 }
 
-func NewHandler(memory *memory.MemoryStorage, config *config.Config, file *file.File, pgxDB *database.DBPostgreSQL, db *sql.DB) *Handler {
+func NewHandler(config *config.Config, storage storage.Storage, db *sql.DB) *Handler {
 	handler := &Handler{
-		memory: memory,
-		config: config,
-		file:   file,
-		pgxDB:  pgxDB,
-		db:     db,
+		storage: storage,
+		config:  config,
+		db:      db,
 	}
 	return handler
 }
@@ -62,7 +57,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortURL := h.generate()
-	if err := h.memory.Set(shortURL, string(originalURL)); err != nil {
+	if err := h.storage.Set(shortURL, string(originalURL)); err != nil {
 		fmt.Print(err)
 		w.WriteHeader(http.StatusConflict)
 		return
@@ -141,7 +136,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	shortURL := h.generate()
-	if err := h.file.Set(shortURL, string(JSONRequest.URL)); err != nil {
+	if err := h.storage.Set(shortURL, string(JSONRequest.URL)); err != nil {
 		fmt.Print(err)
 		w.WriteHeader(http.StatusConflict)
 		return
@@ -159,10 +154,10 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "id")
-	if resURL, exist := h.memory.Get(shortURL); exist {
+	if resURL, exist := h.storage.Get(shortURL); exist {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-	} else if resURL, exist := h.file.Get(shortURL); exist {
+	} else if resURL, exist := h.storage.Get(shortURL); exist {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
