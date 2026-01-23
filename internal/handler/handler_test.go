@@ -9,7 +9,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/repository"
 	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
@@ -48,7 +48,7 @@ func TestHandle(t *testing.T) {
 	}
 	db := database.ConnectDBPostgreSQL(&cfg)
 	log := logger.NewLogger()
-	storage := storage.NewStorage(&cfg, log)
+	storage := repository.NewStorage(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hand := NewHandler(&cfg, storage, db)
@@ -115,7 +115,7 @@ func TestPostReqJSON(t *testing.T) {
 	}
 	db := database.ConnectDBPostgreSQL(&cfg)
 	log := logger.NewLogger()
-	storage := storage.NewStorage(&cfg, log)
+	storage := repository.NewStorage(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewHandler(&cfg, storage, db)

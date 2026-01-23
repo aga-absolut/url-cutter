@@ -11,7 +11,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/repository"
 	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgerrcode"
@@ -21,11 +21,11 @@ import (
 
 type Handler struct {
 	config  *config.Config
-	storage storage.Storage
+	storage repository.Storage
 	db      *sql.DB
 }
 
-func NewHandler(config *config.Config, storage storage.Storage, db *sql.DB) *Handler {
+func NewHandler(config *config.Config, storage repository.Storage, db *sql.DB) *Handler {
 	handler := &Handler{
 		storage: storage,
 		config:  config,

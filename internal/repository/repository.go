@@ -1,4 +1,4 @@
-package storage
+package repository
 
 import (
 	"github.com/aga-absolut/url-cutter/internal/config"
