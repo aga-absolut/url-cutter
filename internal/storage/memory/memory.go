@@ -30,6 +30,6 @@ func (s *MemoryStorage) Get(shortURL string) (string, bool) {
 	return str, exist
 }
 
-func (m *MemoryStorage) SetBatchURL(batch []database.ShotenBatchRequest) ([]database.ShortenResponseItem, error) {
+func (s *MemoryStorage) SetBatchURL(batch []database.ShotenBatchRequest) ([]database.ShortenResponseItem, error) {
 	return nil, errors.New("SetBatchURL not implemented for MemoryStorage")
 }
