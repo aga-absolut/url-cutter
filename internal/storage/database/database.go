@@ -71,7 +71,7 @@ func (s *DBPostgreSQL) Set(shortURL, originalURL string) error {
 		var PgErr *pgconn.PgError
 		if errors.As(err, &PgErr) {
 			if PgErr.Code == pgerrcode.UniqueViolation {
-				return fmt.Errorf("Not unique URL: %v", err)
+				return fmt.Errorf("not unique URL: %v", err)
 			}
 		}
 		return err

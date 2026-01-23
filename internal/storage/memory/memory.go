@@ -18,7 +18,7 @@ func NewMemoryStorage() *MemoryStorage {
 func (s *MemoryStorage) Set(shortURL, originalURL string) error {
 	for _, v := range s.data {
 		if v == originalURL {
-			return fmt.Errorf("Not unique URL.")
+			return fmt.Errorf("not unique URL")
 		}
 	}
 	s.data[shortURL] = originalURL

@@ -114,6 +114,7 @@ func TestPostReqJSON(t *testing.T) {
 	cfg := config.Config{
 		ServerAddress: "http://localhost:8080/api/shorten",
 		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
+		FilePath:      "storage.txt",
 	}
 	pgxDB := database.NewDBPostgreSQL(&cfg)
 	db := database.ConnectDBPostgreSQL(&cfg)

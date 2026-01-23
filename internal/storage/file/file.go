@@ -25,10 +25,13 @@ func NewFile(config *config.Config, logger zap.SugaredLogger) *File {
 func (f *File) checkFile(originalURL string) error {
 	file, err := os.Open(f.config.FilePath)
 	if err != nil {
-		f.logger.Errorw("Error open file:", "Error", err)
+		if os.IsNotExist(err){
+			return nil
+		}
 		return err
 	}
-	
+	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -41,7 +44,7 @@ func (f *File) checkFile(originalURL string) error {
 		}
 		if data.OriginalURL == originalURL {
 			f.logger.Infow("Succes work originalURL:", "URL", originalURL)
-			return fmt.Errorf("Not unique URL.")
+			return fmt.Errorf("not unique URL")
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -51,6 +54,10 @@ func (f *File) checkFile(originalURL string) error {
 }
 
 func (f *File) Set(shortURL, originalURL string) error {
+	if err := f.checkFile(originalURL); err != nil {
+		return fmt.Errorf("not unique URL")
+	}
+
 	f.UUID++
 	UUID := strconv.Itoa(f.UUID)
 	data := model.JSONStructForFile{
@@ -73,10 +80,6 @@ func (f *File) Set(shortURL, originalURL string) error {
 	}
 	defer file.Close()
 
-	if err := f.checkFile(originalURL); err != nil {
-		return fmt.Errorf("Not unique URL.")
-	}
-
 	if _, err = file.Write(result); err != nil {
 		f.logger.Errorw("Error write file:", "Error", shortURL)
 		return err
@@ -90,6 +93,8 @@ func (f *File) Get(shortURL string) (string, bool) {
 		f.logger.Errorw("Error open file:", "Error", err)
 		return "", false
 	}
+	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()

@@ -77,7 +77,7 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	var batch []database.ShotenBatchRequest
 	var responseItem database.ShortenResponseItem
 	var response []database.ShortenResponseItem
-//надос делать запрос и если ошибка то тогда вывод 
+
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
