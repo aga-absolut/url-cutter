@@ -7,16 +7,14 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/handler"
 	"github.com/aga-absolut/url-cutter/internal/repository"
 	"github.com/aga-absolut/url-cutter/internal/router"
-	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 )
 
 func main() {
 	config := config.NewConfig()
 	logger := logger.NewLogger()
-	db := database.ConnectDBPostgreSQL(config)
 	storage := repository.NewStorage(config, logger)
-	handler := handler.NewHandler(config, storage, db)
+	handler := handler.NewHandler(config, storage, logger)
 	router := router.NewRouter(handler)
 
 	logger.Infow("Starting server", "addr", config.ServerAddress)

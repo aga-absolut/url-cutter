@@ -9,8 +9,9 @@ import (
 )
 
 type Storage interface {
-	Set(string, string) error
-	Get(string) (string, bool)
+	Get(shortURL string) (string, bool)
+	Set(shortURL, originalURL string) error
+    SetBatchURL(batch []database.ShotenBatchRequest) ([]database.ShortenResponseItem, error)
 }
 
 func NewStorage(config *config.Config, logger zap.SugaredLogger) Storage {
@@ -18,11 +19,10 @@ func NewStorage(config *config.Config, logger zap.SugaredLogger) Storage {
 		logger.Infow("config PostgreSQL")
 		return database.NewDBPostgreSQL(config)
 	}
-	if config.FilePath != ""{
+	if config.FilePath != "" {
 		logger.Infow("config file")
-		return file.NewFile(config,logger)
+		return file.NewFile(config, logger)
 	}
 	logger.Infow("config memory")
 	return memory.NewMemoryStorage()
-
 }

@@ -1,6 +1,11 @@
 package memory
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/aga-absolut/url-cutter/internal/storage/database"
+)
 
 type MemoryStorage struct {
 	data map[string]string
@@ -23,4 +28,8 @@ func (s *MemoryStorage) Set(shortURL, originalURL string) error {
 func (s *MemoryStorage) Get(shortURL string) (string, bool) {
 	str, exist := s.data[shortURL]
 	return str, exist
+}
+
+func (m *MemoryStorage) SetBatchURL(batch []database.ShotenBatchRequest) ([]database.ShortenResponseItem, error) {
+	return nil, errors.New("SetBatchURL not implemented for MemoryStorage")
 }

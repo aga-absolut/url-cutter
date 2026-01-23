@@ -3,12 +3,14 @@ package file
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
+	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +27,7 @@ func NewFile(config *config.Config, logger zap.SugaredLogger) *File {
 func (f *File) checkFile(originalURL string) error {
 	file, err := os.Open(f.config.FilePath)
 	if err != nil {
-		if os.IsNotExist(err){
+		if os.IsNotExist(err) {
 			return nil
 		}
 		return err
@@ -118,4 +120,8 @@ func (f *File) Get(shortURL string) (string, bool) {
 		f.logger.Errorw("Error parcing file:", "Error", err)
 	}
 	return "", false
+}
+
+func (f *File) SetBatchURL(batch []database.ShotenBatchRequest) ([]database.ShortenResponseItem, error) {
+	return nil, errors.New("SetBatchURL not implemented for FileStorage")
 }

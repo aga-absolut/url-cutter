@@ -3,10 +3,8 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"math/rand/v2"
 	"net/http"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
@@ -14,36 +12,32 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/repository"
 	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
 	config  *config.Config
+	logger  zap.SugaredLogger
 	storage repository.Storage
-	db      *sql.DB
 }
 
-func NewHandler(config *config.Config, storage repository.Storage, db *sql.DB) *Handler {
+func NewHandler(config *config.Config, storage repository.Storage, logger zap.SugaredLogger) *Handler {
 	handler := &Handler{
 		storage: storage,
 		config:  config,
-		db:      db,
+		logger:  logger,
 	}
 	return handler
 }
 
-func (h Handler) generate() string {
-	res := make([]byte, 8)
-	for i := range res {
-		res[i] = h.config.Symbols[rand.IntN(len(h.config.Symbols))]
-	}
-	return string(res)
-}
-
 func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
-	if err := h.db.Ping(); err != nil {
+	db, err := sql.Open("pgx", h.config.DBDSN)
+	if err != nil {
+		http.Error(w, "error open database", http.StatusBadRequest)
+		return
+	}
+	if err := db.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -56,7 +50,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL := h.generate()
+	shortURL := h.config.Generate()
 	if err := h.storage.Set(shortURL, string(originalURL)); err != nil {
 		fmt.Print(err)
 		w.WriteHeader(http.StatusConflict)
@@ -70,51 +64,19 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	var batch []database.ShotenBatchRequest
-	var responseItem database.ShortenResponseItem
-	var response []database.ShortenResponseItem
-
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
-	tx, err := h.db.Begin()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if len(batch) == 0 {
+		http.Error(w, "error batch is empty", http.StatusBadRequest)
 		return
 	}
 
-	stmt, err := tx.Prepare(`INSERT INTO urls VALUES ($1, $2)`)
+	response, err := h.storage.SetBatchURL(batch)
 	if err != nil {
-		tx.Rollback()
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer stmt.Close()
-
-	for _, v := range batch {
-		shortKey := h.generate()
-		_, err = stmt.Exec(shortKey, v.OriginalURL)
-		if err != nil {
-			tx.Rollback()
-			var PgErr *pgconn.PgError
-			if errors.As(err, &PgErr) {
-				if PgErr.Code == pgerrcode.UniqueViolation {
-					w.WriteHeader(http.StatusConflict)
-					return
-				}
-			}
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		responseItem.ShortURL = h.config.Host + "/" + shortKey
-		responseItem.CorrelationID = v.CorrelationID
-		response = append(response, responseItem)
-	}
-
-	if err := tx.Commit(); err != nil {
+		h.logger.Errorw("error set batch url", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -135,7 +97,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	shortURL := h.generate()
+	shortURL := h.config.Generate()
 	if err := h.storage.Set(shortURL, string(JSONRequest.URL)); err != nil {
 		fmt.Print(err)
 		w.WriteHeader(http.StatusConflict)
@@ -155,9 +117,6 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "id")
 	if resURL, exist := h.storage.Get(shortURL); exist {
-		w.Header().Set("Location", resURL)
-		w.WriteHeader(http.StatusTemporaryRedirect)
-	} else if resURL, exist := h.storage.Get(shortURL); exist {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
