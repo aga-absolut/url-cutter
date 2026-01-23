@@ -10,8 +10,8 @@ import (
 
 type Storage interface {
 	Get(shortURL string) (string, bool)
-	Set(shortURL, originalURL string) error
-    SetBatchURL(batch []database.ShotenBatchRequest) ([]database.ShortenResponseItem, error)
+	Set(shortURL, originalURL string) (string, error)
+	SetBatchURL(batch []database.ShotenBatchRequest) ([]database.ShortenResponseItem, error)
 }
 
 func NewStorage(config *config.Config, logger zap.SugaredLogger) Storage {

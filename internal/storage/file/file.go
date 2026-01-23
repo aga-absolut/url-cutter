@@ -24,13 +24,13 @@ func NewFile(config *config.Config, logger zap.SugaredLogger) *File {
 	return &File{config: config, logger: logger}
 }
 
-func (f *File) checkFile(originalURL string) error {
+func (f *File) checkFile(originalURL string) (string, error) {
 	file, err := os.Open(f.config.FilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return "", nil
 		}
-		return err
+		return "", err
 	}
 	defer file.Close()
 
@@ -46,18 +46,21 @@ func (f *File) checkFile(originalURL string) error {
 		}
 		if data.OriginalURL == originalURL {
 			f.logger.Infow("Succes work originalURL:", "URL", originalURL)
-			return fmt.Errorf("not unique URL")
+			return data.ShortURL, fmt.Errorf("not unique URL")
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		f.logger.Errorw("Error parcing file:", "Error", err)
 	}
-	return nil
+	return "", nil
 }
 
-func (f *File) Set(shortURL, originalURL string) error {
-	if err := f.checkFile(originalURL); err != nil {
-		return fmt.Errorf("not unique URL")
+func (f *File) Set(shortURL, originalURL string) (string, error) {
+	if shortKey, err := f.checkFile(originalURL); err != nil {
+		if errors.Is(err, nil) {
+			return shortKey, os.ErrExist
+		}
+		return "", err
 	}
 
 	f.UUID++
@@ -71,22 +74,22 @@ func (f *File) Set(shortURL, originalURL string) error {
 	result, err := json.Marshal(data)
 	if err != nil {
 		f.logger.Errorw("Error marshal file:", "Error", shortURL)
-		return err
+		return "", err
 	}
 	result = append(result, '\n')
 
 	file, err := os.OpenFile(f.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		f.logger.Errorw("Error open file:", "Error", shortURL)
-		return err
+		return "", err
 	}
 	defer file.Close()
 
 	if _, err = file.Write(result); err != nil {
 		f.logger.Errorw("Error write file:", "Error", shortURL)
-		return err
+		return "", err
 	}
-	return nil
+	return "", nil
 }
 
 func (f *File) Get(shortURL string) (string, bool) {

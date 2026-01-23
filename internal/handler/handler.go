@@ -3,9 +3,10 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
@@ -51,9 +52,14 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shortURL := h.config.Generate()
-	if err := h.storage.Set(shortURL, string(originalURL)); err != nil {
-		fmt.Print(err)
-		w.WriteHeader(http.StatusConflict)
+	if shortKey, err := h.storage.Set(shortURL, string(originalURL)); err != nil {
+		if errors.Is(err, os.ErrExist) {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusConflict)
+			w.Write([]byte(h.config.Host + "/" + shortKey))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -98,9 +104,14 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	shortURL := h.config.Generate()
-	if err := h.storage.Set(shortURL, string(JSONRequest.URL)); err != nil {
-		fmt.Print(err)
-		w.WriteHeader(http.StatusConflict)
+	if shortKey, err := h.storage.Set(shortURL, JSONRequest.URL); err != nil {
+		if errors.Is(err, os.ErrExist) {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusConflict)
+			w.Write([]byte(h.config.Host + "/" + shortKey))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 

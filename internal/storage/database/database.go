@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/jackc/pgerrcode"
@@ -56,19 +57,22 @@ func NewDBPostgreSQL(config *config.Config) *DBPostgreSQL {
 	}
 }
 
-func (s *DBPostgreSQL) Set(shortURL, originalURL string) error {
+func (s *DBPostgreSQL) Set(shortURL, originalURL string) (string, error) {
 	_, err := s.db.Exec(`INSERT INTO urls VALUES ($1, $2)`, shortURL, originalURL)
 	if err != nil {
 		var PgErr *pgconn.PgError
 		if errors.As(err, &PgErr) {
 			if PgErr.Code == pgerrcode.UniqueViolation {
-				return fmt.Errorf("not unique URL: %v", err)
+				var shortKey string
+				row := s.db.QueryRow(`SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
+				row.Scan(&shortKey)
+				return shortKey, os.ErrExist
 			}
 		}
-		return err
+		return "", err
 	}
 
-	return nil
+	return "", nil
 }
 
 func (s *DBPostgreSQL) SetBatchURL(batch []ShotenBatchRequest) ([]ShortenResponseItem, error) {
