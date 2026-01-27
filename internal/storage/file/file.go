@@ -10,7 +10,6 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"go.uber.org/zap"
 )
 
@@ -125,6 +124,10 @@ func (f *File) Get(shortURL string) (string, bool) {
 	return "", false
 }
 
-func (f *File) SetBatchURL(batch []database.ShotenBatchRequest) ([]database.ShortenResponseItem, error) {
-	return nil, errors.New("SetBatchURL not implemented for FileStorage")
+func (f *File) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
+	return nil, nil
+}
+
+func (s *File) GetByUserID(userID int) (map[string]string, error) {
+	return nil, nil
 }

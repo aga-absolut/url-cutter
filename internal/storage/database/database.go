@@ -8,35 +8,32 @@ import (
 	"os"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"go.uber.org/zap"
 )
 
-type ShotenBatchRequest struct {
-	CorrelationID string `json:"correlation_id"`
-	OriginalURL   string `json:"original_url"`
-}
-
-type ShortenResponseItem struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
-}
 type DBPostgreSQL struct {
 	config *config.Config
 	db     *sql.DB
+	logger zap.SugaredLogger
 }
 
-func NewDBPostgreSQL(config *config.Config) *DBPostgreSQL {
+func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgreSQL {
 	db, err := sql.Open("pgx", config.DBDSN)
 	if err != nil {
 		log.Fatalf("cannot open db: %v", err)
 	}
 
+	// db.Exec("DROP TABLE IF EXISTS urls CASCADE;")
+
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS urls (
 			short_url TEXT NOT NULL PRIMARY KEY,
-			original_url TEXT NOT NULL
+			original_url TEXT NOT NULL,
+			user_id INTEGER NOT NULL
 		);
 	`)
 	if err != nil {
@@ -54,11 +51,13 @@ func NewDBPostgreSQL(config *config.Config) *DBPostgreSQL {
 	return &DBPostgreSQL{
 		db:     db,
 		config: config,
+		logger: logger,
 	}
 }
 
 func (s *DBPostgreSQL) Set(shortURL, originalURL string) (string, error) {
-	_, err := s.db.Exec(`INSERT INTO urls VALUES ($1, $2)`, shortURL, originalURL)
+	_, err := s.db.Exec(`INSERT INTO urls (short_url, original_url, user_id)
+    VALUES ($1, $2, $3)`, shortURL, originalURL, config.UserID)
 	if err != nil {
 		var PgErr *pgconn.PgError
 		if errors.As(err, &PgErr) {
@@ -75,9 +74,9 @@ func (s *DBPostgreSQL) Set(shortURL, originalURL string) (string, error) {
 	return "", nil
 }
 
-func (s *DBPostgreSQL) SetBatchURL(batch []ShotenBatchRequest) ([]ShortenResponseItem, error) {
-	var responseItem ShortenResponseItem
-	var response []ShortenResponseItem
+func (s *DBPostgreSQL) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
+	var responseItem model.ShortenResponseItem
+	var response []model.ShortenResponseItem
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("error add tx: %w", err)
@@ -125,4 +124,27 @@ func (s *DBPostgreSQL) Get(shortURL string) (string, bool) {
 		return "", false
 	}
 	return originalURL, true
+}
+
+func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
+	var shortURL string
+	var originalURL string
+	mapURLs := make(map[string]string)
+
+	rows, err := s.db.Query(`SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
+	if err != nil {
+		s.logger.Errorw("request completion error", "error", err, "userID", userID)
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&shortURL, &originalURL)
+		if err != nil {
+			s.logger.Errorw("String scaning error", "error", err)
+		}
+		mapURLs[shortURL] = originalURL
+	}
+
+	return mapURLs, nil
 }

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/repository"
-	"github.com/aga-absolut/url-cutter/internal/storage/database"
+	"github.com/aga-absolut/url-cutter/middleware/jwt"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
@@ -30,6 +31,62 @@ func NewHandler(config *config.Config, storage repository.Storage, logger zap.Su
 		logger:  logger,
 	}
 	return handler
+}
+
+func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
+	var ShortenURLs []model.ShortenURLs
+	c, err := r.Cookie("token")
+	if err != nil {
+		switch {
+		case err == http.ErrNoCookie:
+			token, _ := jwt.BuildJWTString()
+			http.SetCookie(w, &http.Cookie{
+				Name:     "token",
+				Value:    token,
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteLaxMode,
+			})
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			w.WriteHeader(http.StatusBadRequest)
+		}
+		return
+	}
+	if c.Valid() != nil {
+		h.logger.Errorw("Cookie validation failed", "error", err)
+		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
+		return
+	}
+
+	tokenString := c.Value
+	userID := jwt.GetUserID(tokenString)
+
+	mapURLs, err := h.storage.GetByUserID(userID)
+	if err != nil {
+		if err == os.ErrExist {
+			fmt.Println("Failed to get user URLs", "error", err, "userID", userID)
+			w.WriteHeader(http.StatusNoContent)
+		}
+		h.logger.Errorw("Failed to get user URLs", "error", err, "userID", userID)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	for shortKey, originalURL := range mapURLs {
+		ShortenURLs = append(ShortenURLs, model.ShortenURLs{
+			ShortURL:    h.config.Host + "/" + shortKey,
+			OriginalURL: originalURL,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(ShortenURLs); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +126,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
-	var batch []database.ShotenBatchRequest
+	var batch []model.ShotenBatchRequest
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

@@ -7,6 +7,11 @@ import (
 	"github.com/caarlos0/env/v11"
 )
 
+var (
+	SecretKey = []byte("my_secret_key")
+	UserID    = 12
+)
+
 type Config struct {
 	ServerAddress string `env:"SERVER_ADDRESS"`
 	Host          string `env:"BASE_URL"`
