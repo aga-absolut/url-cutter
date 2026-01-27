@@ -54,8 +54,8 @@ func GetUserID(tokenString string) int {
 
 func AuthMiddleware(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := r.Cookie("token")
-		if err != nil || c.Valid() != nil {
+		_, err := r.Cookie("token")
+		if err != nil{
 			token, _ := BuildJWTString()
 			http.SetCookie(w, &http.Cookie{
 				Name:     "token",
