@@ -29,7 +29,7 @@ func (s *MemoryStorage) Get(shortURL string) (string, bool) {
 	return str, exist
 }
 
-func (f *MemoryStorage) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
+func (s *MemoryStorage) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
 	return nil, nil
 }
 

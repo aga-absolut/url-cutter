@@ -128,6 +128,6 @@ func (f *File) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenRes
 	return nil, nil
 }
 
-func (s *File) GetByUserID(userID int) (map[string]string, error) {
+func (f *File) GetByUserID(userID int) (map[string]string, error) {
 	return nil, nil
 }

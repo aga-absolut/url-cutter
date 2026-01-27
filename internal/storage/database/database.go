@@ -82,7 +82,7 @@ func (s *DBPostgreSQL) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.Sh
 		return nil, fmt.Errorf("error add tx: %w", err)
 	}
 
-	stmt, err := tx.Prepare(`INSERT INTO urls VALUES ($1, $2)`)
+	stmt, err := tx.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error add stmt: %w", err)
@@ -91,7 +91,7 @@ func (s *DBPostgreSQL) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.Sh
 
 	for _, v := range batch {
 		shortKey := s.config.Generate()
-		_, err = stmt.Exec(shortKey, v.OriginalURL)
+		_, err = stmt.Exec(shortKey, v.OriginalURL, config.UserID)
 		if err != nil {
 			tx.Rollback()
 			var PgErr *pgconn.PgError
@@ -146,5 +146,10 @@ func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
 		mapURLs[shortURL] = originalURL
 	}
 
+	if err := rows.Err(); err != nil{
+		s.logger.Errorw("error rows", "error", err)
+		return nil, err
+	}
+	
 	return mapURLs, nil
 }
