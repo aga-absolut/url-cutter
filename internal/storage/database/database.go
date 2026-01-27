@@ -27,7 +27,7 @@ func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgre
 		log.Fatalf("cannot open db: %v", err)
 	}
 
-	// db.Exec("DROP TABLE IF EXISTS urls CASCADE;")
+	db.Exec("DROP TABLE IF EXISTS urls CASCADE;")
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS urls (
@@ -131,7 +131,7 @@ func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
 	var originalURL string
 	mapURLs := make(map[string]string)
 
-	rows, err := s.db.Query(`SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
+	rows, err := s.db.Query(`SELECT short_url, original_url FROM urls WHERE user_id = $1`, config.UserID)
 	if err != nil {
 		s.logger.Errorw("request completion error", "error", err, "userID", userID)
 		return nil, err
@@ -150,6 +150,6 @@ func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
 		s.logger.Errorw("error rows", "error", err)
 		return nil, err
 	}
-	
+
 	return mapURLs, nil
 }

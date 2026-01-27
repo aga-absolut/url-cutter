@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -65,10 +64,6 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 
 	mapURLs, err := h.storage.GetByUserID(userID)
 	if err != nil {
-		if err == os.ErrExist {
-			fmt.Println("Failed to get user URLs", "error", err, "userID", userID)
-			w.WriteHeader(http.StatusNoContent)
-		}
 		h.logger.Errorw("Failed to get user URLs", "error", err, "userID", userID)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
