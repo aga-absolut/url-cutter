@@ -54,18 +54,18 @@ func GetUserID(tokenString string) int {
 
 func AuthMiddleware(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := r.Cookie("token")
-		if err != nil{
+		c, err := r.Cookie("token")
+		if err != nil {
 			token, _ := BuildJWTString()
-			http.SetCookie(w, &http.Cookie{
+			c = &http.Cookie{
 				Name:     "token",
 				Value:    token,
 				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteLaxMode,
-			})
+				Path:     "/",
+			}
+			http.SetCookie(w, c)
+			r.AddCookie(c)
 		}
-
 		h(w, r)
 	})
 }
