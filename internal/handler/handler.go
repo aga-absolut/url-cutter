@@ -36,21 +36,8 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	var ShortenURLs []model.ShortenURLs
 	c, err := r.Cookie("token")
 	if err != nil {
-		switch {
-		case err == http.ErrNoCookie:
-			token, _ := jwt.BuildJWTString()
-			http.SetCookie(w, &http.Cookie{
-				Name:     "token",
-				Value:    token,
-				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteLaxMode,
-			})
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNoContent)
-		default:
-			w.WriteHeader(http.StatusBadRequest)
-		}
+		h.logger.Errorw("No token in request, middleware failed", "Error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
