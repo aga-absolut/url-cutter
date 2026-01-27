@@ -27,7 +27,7 @@ func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgre
 		log.Fatalf("cannot open db: %v", err)
 	}
 
-	db.Exec("DROP TABLE IF EXISTS urls CASCADE;")
+	// db.Exec("DROP TABLE IF EXISTS urls CASCADE;")
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS urls (
