@@ -36,7 +36,8 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	var ShortenURLs []model.ShortenURLs
 	c, err := r.Cookie("token")
 	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		h.logger.Errorw("No token in request, middleware failed")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -53,11 +54,6 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Errorw("Failed to get user URLs", "error", err, "userID", userID)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	if len(mapURLs) == 0 {
-		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
