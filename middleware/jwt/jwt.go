@@ -49,7 +49,7 @@ func GetUserID(tokenString string) int {
 	if !token.Valid {
 		return -1
 	}
-	return config.UserID
+	return claims.UserID
 }
 
 func AuthMiddleware(h http.HandlerFunc) http.HandlerFunc {

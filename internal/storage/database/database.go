@@ -131,7 +131,7 @@ func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
 	var originalURL string
 	mapURLs := make(map[string]string)
 
-	rows, err := s.db.Query(`SELECT short_url, original_url FROM urls WHERE user_id = $1`, config.UserID)
+	rows, err := s.db.Query(`SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
 	if err != nil {
 		s.logger.Errorw("request completion error", "error", err, "userID", userID)
 		return nil, err
@@ -142,6 +142,7 @@ func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
 		err := rows.Scan(&shortURL, &originalURL)
 		if err != nil {
 			s.logger.Errorw("String scaning error", "error", err)
+			return nil, err
 		}
 		mapURLs[shortURL] = originalURL
 	}

@@ -35,24 +35,20 @@ func NewHandler(config *config.Config, storage repository.Storage, logger zap.Su
 func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	var ShortenURLs []model.ShortenURLs
 	c, err := r.Cookie("token")
-	if err != nil {
-		switch {
-		case err == http.ErrNoCookie:
-			token, _ := jwt.BuildJWTString()
-			http.SetCookie(w, &http.Cookie{
-				Name:     "token",
-				Value:    token,
-				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteLaxMode,
-			})
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNoContent)
-		default:
-			w.WriteHeader(http.StatusBadRequest)
-		}
-		return
+	if err == http.ErrNoCookie {
+		token, _ := jwt.BuildJWTString()
+		http.SetCookie(w, &http.Cookie{
+			Name:     "token",
+			Value:    token,
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+		})
+	}else if err != nil{
+		http.Error(w,"Invalid Cookie", http.StatusUnauthorized)
+		return 
 	}
+
 	if c.Valid() != nil {
 		h.logger.Errorw("Cookie validation failed", "error", err)
 		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
