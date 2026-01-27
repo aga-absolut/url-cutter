@@ -44,9 +44,14 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 			Secure:   true,
 			SameSite: http.SameSiteLaxMode,
 		})
-	}else if err != nil{
-		http.Error(w,"Invalid Cookie", http.StatusUnauthorized)
-		return 
+		c, err = r.Cookie("token")
+		if err != nil {
+			http.Error(w, "Failed to read new cookie", http.StatusInternalServerError)
+			return
+		}
+	} else if err != nil {
+		http.Error(w, "Invalid Cookie", http.StatusUnauthorized)
+		return
 	}
 
 	if c.Valid() != nil {
@@ -73,7 +78,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(ShortenURLs); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
