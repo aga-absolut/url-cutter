@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -37,21 +36,10 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	var ShortenURLs []model.ShortenURLs
 	c, err := r.Cookie("token")
 	if err != nil {
-		token, err := jwt.BuildJWTString()
-		if err != nil {
-			h.logger.Errorw("can`t build jwt token")
-			return
-		}
-		http.SetCookie(w, &http.Cookie{
-			Name:     "token",
-			Value:    token,
-			HttpOnly: true,
-		})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNoContent)
-		fmt.Println("Token created at GetUserUrls!")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
 	if c.Valid() != nil {
 		h.logger.Errorw("Cookie validation failed", "error", err)
 		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
@@ -68,6 +56,11 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(mapURLs) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	for shortKey, originalURL := range mapURLs {
 		ShortenURLs = append(ShortenURLs, model.ShortenURLs{
 			ShortURL:    h.config.Host + "/" + shortKey,
@@ -76,7 +69,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(ShortenURLs); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
