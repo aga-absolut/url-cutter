@@ -118,6 +118,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte(h.config.Host + "/" + shortURL))
 }
 
 func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
