@@ -36,8 +36,20 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	var ShortenURLs []model.ShortenURLs
 	c, err := r.Cookie("token")
 	if err != nil {
-		h.logger.Errorw("No token in request, middleware failed")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		if err == http.ErrNoCookie {
+			token, _ := jwt.BuildJWTString()
+			http.SetCookie(w, &http.Cookie{
+				Name:     "token",
+				Value:    token,
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteLaxMode,
+			})
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -105,7 +117,6 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(h.config.Host + "/" + shortURL))
 }
 
 func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
