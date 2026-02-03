@@ -33,7 +33,8 @@ func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgre
 		CREATE TABLE IF NOT EXISTS urls (
 			short_url TEXT NOT NULL PRIMARY KEY,
 			original_url TEXT NOT NULL,
-			user_id INTEGER NOT NULL
+			user_id INTEGER NOT NULL,
+			is_deleted BOOLEAN DEFAULT FALSE
 		);
 	`)
 	if err != nil {
@@ -116,10 +117,18 @@ func (s *DBPostgreSQL) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.Sh
 }
 
 func (s *DBPostgreSQL) Get(shortURL string) (string, bool) {
-	row := s.db.QueryRow(`SELECT original_url FROM urls WHERE short_url = $1`, shortURL)
+	var (
+		deletedFlag bool
+		originalURL string
+	)
 
-	var originalURL string
-	err := row.Scan(&originalURL)
+	row := s.db.QueryRow(`SELECT is_deleted, original_url FROM urls WHERE short_url = $1`, shortURL)
+
+	err := row.Scan(&deletedFlag, &originalURL)
+	if deletedFlag {
+		return "", false
+	}
+
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", false
 	}
@@ -147,10 +156,16 @@ func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
 		mapURLs[shortURL] = originalURL
 	}
 
-	if err := rows.Err(); err != nil{
+	if err := rows.Err(); err != nil {
 		s.logger.Errorw("error rows", "error", err)
 		return nil, err
 	}
 
 	return mapURLs, nil
+}
+
+func (s *DBPostgreSQL) DeletedFlag(shortURLs []string, userID int) error {
+	query := `UPDATE urls SET is_deleted = true WHERE short_url = ANY($1) AND user_id = $2`
+	_, err := s.db.Exec(query, shortURLs, userID)
+	return err
 }

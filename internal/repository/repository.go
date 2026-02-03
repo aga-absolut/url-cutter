@@ -14,6 +14,7 @@ type Storage interface {
 	Set(shortURL, originalURL string) (string, error)
 	SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error)
 	GetByUserID(userID int) (map[string]string, error)
+	DeletedFlag(shortURLs []string, userID int) error
 }
 
 func NewStorage(config *config.Config, logger zap.SugaredLogger) Storage {

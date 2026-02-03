@@ -12,6 +12,7 @@ type JSONStructForFile struct {
 	UUID        string `json:"uuid"`
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+	DeletedFlag bool   `db:"is_deleted"`
 }
 
 type ShotenBatchRequest struct {
@@ -25,6 +26,6 @@ type ShortenResponseItem struct {
 }
 
 type ShortenURLs struct {
-	ShortURL      string `json:"short_url"`
-	OriginalURL   string `json:"original_url"`
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }

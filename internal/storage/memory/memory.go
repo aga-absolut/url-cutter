@@ -36,3 +36,7 @@ func (s *MemoryStorage) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.S
 func (s *MemoryStorage) GetByUserID(userID int) (map[string]string, error) {
 	return nil, nil
 }
+
+func (s *MemoryStorage) DeletedFlag(shortURLs []string, userID int) error {
+	return nil
+}

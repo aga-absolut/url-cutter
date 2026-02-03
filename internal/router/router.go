@@ -12,6 +12,7 @@ func NewRouter(handler *handler.Handler) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(logger.WithFieldsInfo)
 
+	router.Delete("/api/user/urls", handler.DeleteUserURLs)
 	router.Post("/", jwt.AuthMiddleware(compress.Decompress(handler.PostHandler)))
 	router.Post("/api/shorten", jwt.AuthMiddleware(compress.Decompress(handler.JSONPostHandler)))
 	router.Post("/api/shorten/batch", jwt.AuthMiddleware(handler.PostBatchHandler))

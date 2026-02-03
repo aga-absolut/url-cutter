@@ -32,6 +32,28 @@ func NewHandler(config *config.Config, storage repository.Storage, logger zap.Su
 	return handler
 }
 
+func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
+	var arr []string
+	if err := json.NewDecoder(r.Body).Decode(&arr); err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	c, err := r.Cookie("token")
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	userID := jwt.GetUserID(c.Value)
+
+	go h.storage.DeletedFlag(arr, userID)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+}
+
 func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	var ShortenURLs []model.ShortenURLs
 	c, err := r.Cookie("token")
@@ -187,6 +209,6 @@ func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
-		http.Error(w, "Not found", http.StatusNotFound)
+		w.WriteHeader(http.StatusGone)
 	}
 }

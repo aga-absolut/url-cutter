@@ -131,3 +131,7 @@ func (f *File) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenRes
 func (f *File) GetByUserID(userID int) (map[string]string, error) {
 	return nil, nil
 }
+
+func (f *File) DeletedFlag(shortURLs []string, userID int) error {
+	return nil
+}
