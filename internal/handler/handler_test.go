@@ -10,6 +10,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/middleware/jwt"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -41,15 +42,16 @@ func TestHandle(t *testing.T) {
 		},
 	}
 
-	cfg := config.Config{
+	cfg := &config.Config{
 		ServerAddress: "http://localhost:8080/",
+		Host:          "http://localhost:8080",
 	}
-	deleteChan := make(chan string, 10)
+	deleteCh := make(chan string)
 	log := logger.NewLogger()
-	storage := storage.NewStorage(&cfg, log)
+	storage := storage.NewStorage(cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(&cfg, storage, log, deleteChan)
+			hand := NewHandler(cfg, storage, log, deleteCh)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -58,6 +60,13 @@ func TestHandle(t *testing.T) {
 			//----------------------------------------Post request
 
 			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
+
+			token, _ := jwt.BuildJWTString() 
+			req.AddCookie(&http.Cookie{
+				Name:  "token",
+				Value: token,
+			})
+
 			w := httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
@@ -96,7 +105,6 @@ func TestPostReqJSON(t *testing.T) {
 		name        string
 		statusCode  int
 		contentType string
-		request     string
 		body        string
 	}{
 		{
@@ -106,29 +114,38 @@ func TestPostReqJSON(t *testing.T) {
 			body:        `{"url": "https://yandex.ru"}`,
 		},
 	}
-	cfg := config.Config{
+
+	cfg := &config.Config{
 		ServerAddress: "http://localhost:8080/api/shorten",
+		Host:          "http://localhost:8080",
 		FilePath:      "storage.txt",
 	}
-	deleteChan := make(chan string, 10)
 	log := logger.NewLogger()
-	storage := storage.NewStorage(&cfg, log)
+	deleteCh := make(chan string)
+	storage := storage.NewStorage(cfg, log)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(&cfg, storage, log, deleteChan)
+			handler := NewHandler(cfg, storage, log, deleteCh)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)
 
 			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
+
+			token, _ := jwt.BuildJWTString() 
+			req.AddCookie(&http.Cookie{
+				Name:  "token",
+				Value: token,
+			})
+
 			w := httptest.NewRecorder()
-
 			router.ServeHTTP(w, req)
-			r := w.Result()
-			defer r.Body.Close()
 
-			assert.Equal(t, tt.statusCode, r.StatusCode)
-			assert.Equal(t, tt.contentType, r.Header.Get("Content-Type"))
+			defer w.Result().Body.Close()
+
+			assert.Equal(t, tt.statusCode, w.Code)
+			assert.Equal(t, tt.contentType, w.Header().Get("Content-Type"))
 
 			body := w.Body.String()
 			assert.Contains(t, body, `"result"`, "answer must have a result")
