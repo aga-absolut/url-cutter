@@ -2,6 +2,7 @@ package file
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -54,7 +55,7 @@ func (f *File) checkFile(originalURL string) (string, error) {
 	return "", nil
 }
 
-func (f *File) Set(shortURL, originalURL string) (string, error) {
+func (f *File) Set(ctx context.Context, shortURL, originalURL string) (string, error) {
 	if shortKey, err := f.checkFile(originalURL); err != nil {
 		if errors.Is(err, nil) {
 			return shortKey, os.ErrExist
@@ -91,7 +92,7 @@ func (f *File) Set(shortURL, originalURL string) (string, error) {
 	return "", nil
 }
 
-func (f *File) Get(shortURL string) (string, bool) {
+func (f *File) Get(ctx context.Context, shortURL string) (string, bool) {
 	file, err := os.Open(f.config.FilePath)
 	if err != nil {
 		f.logger.Errorw("Error open file:", "Error", err)
@@ -124,14 +125,14 @@ func (f *File) Get(shortURL string) (string, bool) {
 	return "", false
 }
 
-func (f *File) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
+func (f *File) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
 	return nil, nil
 }
 
-func (f *File) GetByUserID(userID int) (map[string]string, error) {
+func (f *File) GetByUserID(ctx context.Context, userID int) (map[string]string, error) {
 	return nil, nil
 }
 
-func (f *File) DeletedFlag(shortURLs []string, userID int) error {
+func (f *File) DeletedFlag(ctx context.Context, shortURL string) error {
 	return nil
 }

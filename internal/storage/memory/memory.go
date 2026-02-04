@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"os"
 
 	"github.com/aga-absolut/url-cutter/internal/model"
@@ -14,7 +15,7 @@ func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{data: make(map[string]string)}
 }
 
-func (s *MemoryStorage) Set(shortURL, originalURL string) (string, error) {
+func (s *MemoryStorage) Set(ctx context.Context, shortURL, originalURL string) (string, error) {
 	for k, v := range s.data {
 		if v == originalURL {
 			return k, os.ErrExist
@@ -24,19 +25,19 @@ func (s *MemoryStorage) Set(shortURL, originalURL string) (string, error) {
 	return shortURL, nil
 }
 
-func (s *MemoryStorage) Get(shortURL string) (string, bool) {
+func (s *MemoryStorage) Get(ctx context.Context, shortURL string) (string, bool) {
 	str, exist := s.data[shortURL]
 	return str, exist
 }
 
-func (s *MemoryStorage) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
+func (s *MemoryStorage) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
 	return nil, nil
 }
 
-func (s *MemoryStorage) GetByUserID(userID int) (map[string]string, error) {
+func (s *MemoryStorage) GetByUserID(ctx context.Context, userID int) (map[string]string, error) {
 	return nil, nil
 }
 
-func (s *MemoryStorage) DeletedFlag(shortURLs []string, userID int) error {
+func (s *MemoryStorage) DeletedFlag(ctx context.Context, shortURL string) error {
 	return nil
 }

@@ -43,13 +43,13 @@ func TestHandle(t *testing.T) {
 
 	cfg := config.Config{
 		ServerAddress: "http://localhost:8080/",
-		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 	}
+	deleteChan := make(chan string, 10)
 	log := logger.NewLogger()
 	storage := repository.NewStorage(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(&cfg, storage, log)
+			hand := NewHandler(&cfg, storage, log, deleteChan)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -108,14 +108,14 @@ func TestPostReqJSON(t *testing.T) {
 	}
 	cfg := config.Config{
 		ServerAddress: "http://localhost:8080/api/shorten",
-		Symbols:       []byte("qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"),
 		FilePath:      "storage.txt",
 	}
+	deleteChan := make(chan string, 10)
 	log := logger.NewLogger()
 	storage := repository.NewStorage(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(&cfg, storage, log)
+			handler := NewHandler(&cfg, storage, log, deleteChan)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -56,15 +57,15 @@ func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgre
 	}
 }
 
-func (s *DBPostgreSQL) Set(shortURL, originalURL string) (string, error) {
-	_, err := s.db.Exec(`INSERT INTO urls (short_url, original_url, user_id)
+func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string) (string, error) {
+	_, err := s.db.ExecContext(ctx, `INSERT INTO urls (short_url, original_url, user_id)
     VALUES ($1, $2, $3)`, shortURL, originalURL, config.UserID)
 	if err != nil {
 		var PgErr *pgconn.PgError
 		if errors.As(err, &PgErr) {
 			if PgErr.Code == pgerrcode.UniqueViolation {
 				var shortKey string
-				row := s.db.QueryRow(`SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
+				row := s.db.QueryRowContext(ctx, `SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
 				row.Scan(&shortKey)
 				return shortKey, os.ErrExist
 			}
@@ -75,7 +76,7 @@ func (s *DBPostgreSQL) Set(shortURL, originalURL string) (string, error) {
 	return "", nil
 }
 
-func (s *DBPostgreSQL) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
+func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
 	var responseItem model.ShortenResponseItem
 	var response []model.ShortenResponseItem
 	tx, err := s.db.Begin()
@@ -91,8 +92,8 @@ func (s *DBPostgreSQL) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.Sh
 	defer stmt.Close()
 
 	for _, v := range batch {
-		shortKey := s.config.Generate()
-		_, err = stmt.Exec(shortKey, v.OriginalURL, config.UserID)
+		shortKey := s.config.Generate(v.OriginalURL)
+		_, err = stmt.ExecContext(ctx, shortKey, v.OriginalURL, config.UserID)
 		if err != nil {
 			tx.Rollback()
 			var PgErr *pgconn.PgError
@@ -116,13 +117,13 @@ func (s *DBPostgreSQL) SetBatchURL(batch []model.ShotenBatchRequest) ([]model.Sh
 	return response, nil
 }
 
-func (s *DBPostgreSQL) Get(shortURL string) (string, bool) {
+func (s *DBPostgreSQL) Get(ctx context.Context, shortURL string) (string, bool) {
 	var (
 		deletedFlag bool
 		originalURL string
 	)
 
-	row := s.db.QueryRow(`SELECT is_deleted, original_url FROM urls WHERE short_url = $1`, shortURL)
+	row := s.db.QueryRowContext(ctx, `SELECT is_deleted, original_url FROM urls WHERE short_url = $1`, shortURL)
 
 	err := row.Scan(&deletedFlag, &originalURL)
 	if deletedFlag {
@@ -135,12 +136,12 @@ func (s *DBPostgreSQL) Get(shortURL string) (string, bool) {
 	return originalURL, true
 }
 
-func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
+func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) (map[string]string, error) {
 	var shortURL string
 	var originalURL string
 	mapURLs := make(map[string]string)
 
-	rows, err := s.db.Query(`SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
+	rows, err := s.db.QueryContext(ctx, `SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
 	if err != nil {
 		s.logger.Errorw("request completion error", "error", err, "userID", userID)
 		return nil, err
@@ -164,8 +165,8 @@ func (s *DBPostgreSQL) GetByUserID(userID int) (map[string]string, error) {
 	return mapURLs, nil
 }
 
-func (s *DBPostgreSQL) DeletedFlag(shortURLs []string, userID int) error {
-	query := `UPDATE urls SET is_deleted = true WHERE short_url = ANY($1) AND user_id = $2`
-	_, err := s.db.Exec(query, shortURLs, userID)
+func (s *DBPostgreSQL) DeletedFlag(ctx context.Context, shortURL string) error {
+	query := `UPDATE urls SET is_deleted = true WHERE short_url = $1`
+	_, err := s.db.ExecContext(ctx, query, shortURL)
 	return err
 }

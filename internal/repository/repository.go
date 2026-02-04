@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage/database"
@@ -10,11 +12,11 @@ import (
 )
 
 type Storage interface {
-	Get(shortURL string) (string, bool)
-	Set(shortURL, originalURL string) (string, error)
-	SetBatchURL(batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error)
-	GetByUserID(userID int) (map[string]string, error)
-	DeletedFlag(shortURLs []string, userID int) error
+	Get(ctx context.Context, shortURL string) (string, bool)
+	Set(ctx context.Context, shortURL, originalURL string) (string, error)
+	SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error)
+	GetByUserID(ctx context.Context, userID int) (map[string]string, error)
+	DeletedFlag(ctx context.Context, shortURL string) error
 }
 
 func NewStorage(config *config.Config, logger zap.SugaredLogger) Storage {

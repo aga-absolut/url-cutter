@@ -1,8 +1,11 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"flag"
-	"math/rand/v2"
+	"fmt"
+	"math/rand"
 
 	"github.com/caarlos0/env/v11"
 )
@@ -17,13 +20,10 @@ type Config struct {
 	Host          string `env:"BASE_URL"`
 	FilePath      string `env:"FILE_STORAGE_PATH"`
 	DBDSN         string `env:"DATABASE_DSN"`
-	Symbols       []byte
 }
 
 func NewConfig() *Config {
 	cfg := &Config{}
-	cfg.Symbols = []byte("QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
-
 	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "server host:port")
 	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")
 	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")             // storage.txt
@@ -36,10 +36,8 @@ func NewConfig() *Config {
 	return cfg
 }
 
-func (c Config) Generate() string {
-	res := make([]byte, 8)
-	for i := range res {
-		res[i] = c.Symbols[rand.IntN(len(c.Symbols))]
-	}
-	return string(res)
+func (c Config) Generate(originalURL string) string {
+	salt := rand.Intn(9999)
+	data := sha256.Sum224([]byte(fmt.Sprintf("%s%d", originalURL, salt)))
+	return hex.EncodeToString(data[:4])
 }
