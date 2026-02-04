@@ -16,8 +16,8 @@ func (c gzipWriter) Write(p []byte) (int, error) {
 	return c.zipWriter.Write(p)
 }
 
-func Compress(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Compress(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			h.ServeHTTP(w, r)
 			return
@@ -28,11 +28,11 @@ func Compress(h http.HandlerFunc) http.HandlerFunc {
 
 		w.Header().Set("Content-Encoding", "gzip")
 		h.ServeHTTP(gzipWriter{ResponseWriter: w, zipWriter: zipWriter}, r)
-	}
+	})
 }
 
-func Decompress(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Decompress(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			h.ServeHTTP(w, r)
 			return
@@ -47,5 +47,5 @@ func Decompress(h http.HandlerFunc) http.HandlerFunc {
 		r.Body = zipReader
 		defer zipReader.Close()
 		h.ServeHTTP(w, r)
-	}
+	})
 }

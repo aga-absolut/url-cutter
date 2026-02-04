@@ -19,7 +19,7 @@ import (
 
 type Handler struct {
 	config     *config.Config
-	logger     zap.SugaredLogger
+	logger     *zap.SugaredLogger
 	storage    repository.Storage
 	deleteChan chan string
 }
@@ -28,7 +28,7 @@ func NewHandler(config *config.Config, storage repository.Storage, logger zap.Su
 	handler := &Handler{
 		storage:    storage,
 		config:     config,
-		logger:     logger,
+		logger:     &logger,
 		deleteChan: deleteChan,
 	}
 	return handler
@@ -52,7 +52,7 @@ func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	var ShortenURLs []model.ShortenURLs
-	c, err := r.Cookie("token")
+	cookie, err := r.Cookie("token")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			token, _ := jwt.BuildJWTString()
@@ -71,14 +71,18 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if c.Valid() != nil {
+	if err := cookie.Valid(); err != nil {
 		h.logger.Errorw("Cookie validation failed", "error", err)
 		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
 		return
 	}
 
-	tokenString := c.Value
-	userID := jwt.GetUserID(tokenString)
+	userID, err := jwt.GetUserID(cookie.Value)
+	if err != nil {
+		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+		h.logger.Errorw("Failed to get userID", "error", err)
+		return
+	}
 
 	mapURLs, err := h.storage.GetByUserID(r.Context(), userID)
 	if err != nil {
@@ -120,9 +124,32 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	
+	if len(originalURL) == 0 {
+		http.Error(w, "error empty body", http.StatusBadRequest)
+	}
 
-	shortURL := h.config.Generate(string(originalURL))
-	if shortKey, err := h.storage.Set(r.Context(), shortURL, string(originalURL)); err != nil {
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := cookie.Valid(); err != nil {
+		h.logger.Errorw("Cookie validation failed", "error", err)
+		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := jwt.GetUserID(cookie.Value)
+	if err != nil {
+		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+		h.logger.Errorw("Failed to get userID", "error", err)
+		return
+	}
+
+	shortURL := config.Generate(string(originalURL))
+	if shortKey, err := h.storage.Set(r.Context(), shortURL, string(originalURL), userID); err != nil {
 		if errors.Is(err, os.ErrExist) {
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusConflict)
@@ -144,13 +171,33 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
+
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := cookie.Valid(); err != nil {
+		h.logger.Errorw("Cookie validation failed", "error", err)
+		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := jwt.GetUserID(cookie.Value)
+	if err != nil {
+		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+		h.logger.Errorw("Failed to get userID", "error", err)
+		return
+	}
 
 	if len(batch) == 0 {
 		http.Error(w, "error batch is empty", http.StatusBadRequest)
 		return
 	}
 
-	response, err := h.storage.SetBatchURL(r.Context(), batch)
+	response, err := h.storage.SetBatchURL(r.Context(), batch, userID)
 	if err != nil {
 		h.logger.Errorw("error set batch url", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -173,8 +220,27 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	shortURL := h.config.Generate(JSONRequest.URL)
-	if shortKey, err := h.storage.Set(r.Context(), shortURL, JSONRequest.URL); err != nil {
+	cookie, err := r.Cookie("token")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if err := cookie.Valid(); err != nil {
+		h.logger.Errorw("Cookie validation failed", "error", err)
+		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := jwt.GetUserID(cookie.Value)
+	if err != nil {
+		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+		h.logger.Errorw("Failed to get userID", "error", err)
+		return
+	}
+
+	shortURL := config.Generate(JSONRequest.URL)
+	if shortKey, err := h.storage.Set(r.Context(), shortURL, JSONRequest.URL, userID); err != nil {
 		if errors.Is(err, os.ErrExist) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)

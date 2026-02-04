@@ -10,9 +10,9 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/handler"
-	"github.com/aga-absolut/url-cutter/internal/repository"
 	"github.com/aga-absolut/url-cutter/internal/router"
-	"github.com/aga-absolut/url-cutter/internal/workerpool"
+	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/worker"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 )
 
@@ -22,19 +22,19 @@ func main() {
 
 	deleteChan := make(chan string, 10)
 
-	config := config.NewConfig()
+	cfg := config.NewConfig()
 	logger := logger.NewLogger()
-	storage := repository.NewStorage(config, logger)
-	workerpool := workerpool.NewWorkerPool(ctx, deleteChan, storage, 10)
-	handler := handler.NewHandler(config, storage, logger, deleteChan)
+	storage := storage.NewStorage(cfg, logger)
+	worker := worker.NewWorkerPool(ctx, deleteChan, storage, config.SizeWorkers)
+	handler := handler.NewHandler(cfg, storage, logger, deleteChan)
 	router := router.NewRouter(handler)
 
 	server := &http.Server{
-		Addr:    config.ServerAddress,
+		Addr:    cfg.ServerAddress,
 		Handler: router,
 	}
 	go func() {
-		logger.Infow("Starting server", "addr", config.ServerAddress)
+		logger.Infow("Starting server", "addr", cfg.ServerAddress)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Errorw("Server error", "Error", err)
 		}
@@ -50,6 +50,6 @@ func main() {
 		logger.Errorw("Server shutdown error", "Error", err)
 	}
 
-	workerpool.Stop()
+	worker.Stop()
 	logger.Info("Application stopped successfully")
 }

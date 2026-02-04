@@ -6,13 +6,15 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/caarlos0/env/v11"
 )
 
 var (
-	SecretKey = []byte("my_secret_key")
-	UserID    = 12
+	SecretKey    = []byte("my_secret_key")
+	TokenExpTime = time.Hour * 3
+	SizeWorkers  = 1
 )
 
 type Config struct {
@@ -36,7 +38,7 @@ func NewConfig() *Config {
 	return cfg
 }
 
-func (c Config) Generate(originalURL string) string {
+func Generate(originalURL string) string {
 	salt := rand.Intn(9999)
 	data := sha256.Sum224([]byte(fmt.Sprintf("%s%d", originalURL, salt)))
 	return hex.EncodeToString(data[:4])

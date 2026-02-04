@@ -9,7 +9,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/repository"
+	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +46,7 @@ func TestHandle(t *testing.T) {
 	}
 	deleteChan := make(chan string, 10)
 	log := logger.NewLogger()
-	storage := repository.NewStorage(&cfg, log)
+	storage := storage.NewStorage(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hand := NewHandler(&cfg, storage, log, deleteChan)
@@ -112,7 +112,7 @@ func TestPostReqJSON(t *testing.T) {
 	}
 	deleteChan := make(chan string, 10)
 	log := logger.NewLogger()
-	storage := repository.NewStorage(&cfg, log)
+	storage := storage.NewStorage(&cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := NewHandler(&cfg, storage, log, deleteChan)

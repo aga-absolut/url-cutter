@@ -1,4 +1,4 @@
-package workerpool
+package worker
 
 import (
 	"context"
@@ -10,39 +10,38 @@ import (
 
 type Worker struct {
 	deleteChan chan string
-	ctx        context.Context
 	storage    repository.Storage
 	wg         sync.WaitGroup
 	size       int
 }
 
-func NewWorkerPool(ctx context.Context, deletedChan chan string, storage repository.Storage, size int) *Worker{
+func NewWorkerPool(ctx context.Context, deletedChan chan string, storage repository.Storage, size int) *Worker {
 	w := &Worker{
-		ctx:        ctx,
 		deleteChan: deletedChan,
-		storage: storage,
-		size: size,
+		storage:    storage,
+		size:       size,
 	}
 
 	w.wg.Add(size)
 	for i := 0; i < size; i++ {
-		go w.worker()
+		go w.worker(ctx)
 	}
 	return w
 }
 
-func (w *Worker) worker() {
+func (w *Worker) worker(ctx context.Context) {
 	defer w.wg.Done()
 	for {
 		select {
-		case <-w.ctx.Done():
+		case <-ctx.Done():
 			return
 		case shortURL, ok := <-w.deleteChan:
 			if !ok {
 				return
 			}
-			if err := w.storage.DeletedFlag(w.ctx, shortURL); err != nil {
+			if err := w.storage.DeletedFlag(ctx, shortURL); err != nil {
 				log.Printf("Failed to delete %s: %v", shortURL, err)
+				return
 			}
 		}
 	}

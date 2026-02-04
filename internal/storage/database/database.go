@@ -57,45 +57,49 @@ func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgre
 	}
 }
 
-func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string) (string, error) {
-	_, err := s.db.ExecContext(ctx, `INSERT INTO urls (short_url, original_url, user_id)
-    VALUES ($1, $2, $3)`, shortURL, originalURL, config.UserID)
+func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return "", fmt.Errorf("error add tx: %w", err)
+	}
+	defer tx.Rollback()
+	_, err = tx.ExecContext(ctx, `INSERT INTO urls (short_url, original_url, user_id)
+    VALUES ($1, $2, $3)`, shortURL, originalURL, userID)
 	if err != nil {
 		var PgErr *pgconn.PgError
 		if errors.As(err, &PgErr) {
 			if PgErr.Code == pgerrcode.UniqueViolation {
 				var shortKey string
-				row := s.db.QueryRowContext(ctx, `SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
-				row.Scan(&shortKey)
+				row := tx.QueryRowContext(ctx, `SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
+				if err := row.Scan(&shortKey); err != nil {
+					return "", fmt.Errorf("error scaning query row: %w", err)
+				}
+				if err := tx.Commit(); err != nil {
+					return "", fmt.Errorf("error commit query request: %w", err)
+				}
 				return shortKey, os.ErrExist
 			}
 		}
 		return "", err
 	}
-
+	if err := tx.Commit(); err != nil {
+		return "", fmt.Errorf("error commit insert request: %w", err)
+	}
 	return "", nil
 }
 
-func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
-	var responseItem model.ShortenResponseItem
+func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	var response []model.ShortenResponseItem
-	tx, err := s.db.Begin()
+	stmt, err := s.db.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
 	if err != nil {
-		return nil, fmt.Errorf("error add tx: %w", err)
-	}
-
-	stmt, err := tx.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
-	if err != nil {
-		tx.Rollback()
 		return nil, fmt.Errorf("error add stmt: %w", err)
 	}
 	defer stmt.Close()
 
 	for _, v := range batch {
-		shortKey := s.config.Generate(v.OriginalURL)
-		_, err = stmt.ExecContext(ctx, shortKey, v.OriginalURL, config.UserID)
+		shortKey := config.Generate(v.OriginalURL)
+		_, err = stmt.ExecContext(ctx, shortKey, v.OriginalURL, userID)
 		if err != nil {
-			tx.Rollback()
 			var PgErr *pgconn.PgError
 			if errors.As(err, &PgErr) {
 				if PgErr.Code == pgerrcode.UniqueViolation {
@@ -105,15 +109,12 @@ func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatc
 			return nil, fmt.Errorf("error request: %w", err)
 		}
 
-		responseItem.ShortURL = s.config.Host + "/" + shortKey
-		responseItem.CorrelationID = v.CorrelationID
-		response = append(response, responseItem)
+		response = append(response, model.ShortenResponseItem{
+			ShortURL:      s.config.Host + "/" + shortKey,
+			CorrelationID: v.CorrelationID,
+		})
 	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("error commit tx: %w", err)
-	}
-
+	
 	return response, nil
 }
 

@@ -55,7 +55,7 @@ func (f *File) checkFile(originalURL string) (string, error) {
 	return "", nil
 }
 
-func (f *File) Set(ctx context.Context, shortURL, originalURL string) (string, error) {
+func (f *File) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
 	if shortKey, err := f.checkFile(originalURL); err != nil {
 		if errors.Is(err, nil) {
 			return shortKey, os.ErrExist
@@ -125,7 +125,7 @@ func (f *File) Get(ctx context.Context, shortURL string) (string, bool) {
 	return "", false
 }
 
-func (f *File) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
+func (f *File) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	return nil, nil
 }
 

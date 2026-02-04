@@ -3,28 +3,37 @@ package jwt
 import (
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type Credentials struct {
-	Password string `json:"password"`
-	Username string `json:"username"`
-}
-
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID int
 }
 
+var (
+	userID int
+	mu     sync.Mutex
+)
+
+func NewUserID() int {
+	mu.Lock()
+	defer mu.Unlock()
+	userID++
+	return userID
+}
+
 func BuildJWTString() (string, error) {
+	localUserID := NewUserID()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 3)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(config.TokenExpTime)),
 		},
-		UserID: config.UserID,
+		UserID: localUserID,
 	})
 
 	tokenString, err := token.SignedString(config.SecretKey)
@@ -35,28 +44,32 @@ func BuildJWTString() (string, error) {
 	return tokenString, nil
 }
 
-func GetUserID(tokenString string) int {
+func GetUserID(tokenString string) (int, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
-		if t.Method.Alg() != "HS256" {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return config.SecretKey, nil
 	})
 	if err != nil {
-		return -1
+		return 0, err
 	}
 	if !token.Valid {
-		return -1
+		return 0, err
 	}
-	return claims.UserID
+	return claims.UserID, nil
 }
 
-func AuthMiddleware(h http.HandlerFunc) http.HandlerFunc {
+func AuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ , err := r.Cookie("token")
+		_, err := r.Cookie("token")
 		if err != nil {
-			token, _ := BuildJWTString()
+			token, err := BuildJWTString()
+			if err != nil {
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+				return
+			}
 			c := &http.Cookie{
 				Name:     "token",
 				Value:    token,
@@ -66,6 +79,7 @@ func AuthMiddleware(h http.HandlerFunc) http.HandlerFunc {
 			http.SetCookie(w, c)
 			r.AddCookie(c)
 		}
-		h(w, r)
+
+		h.ServeHTTP(w, r)
 	})
 }

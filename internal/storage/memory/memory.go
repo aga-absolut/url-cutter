@@ -15,7 +15,7 @@ func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{data: make(map[string]string)}
 }
 
-func (s *MemoryStorage) Set(ctx context.Context, shortURL, originalURL string) (string, error) {
+func (s *MemoryStorage) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
 	for k, v := range s.data {
 		if v == originalURL {
 			return k, os.ErrExist
@@ -30,7 +30,7 @@ func (s *MemoryStorage) Get(ctx context.Context, shortURL string) (string, bool)
 	return str, exist
 }
 
-func (s *MemoryStorage) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest) ([]model.ShortenResponseItem, error) {
+func (s *MemoryStorage) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	return nil, nil
 }
 

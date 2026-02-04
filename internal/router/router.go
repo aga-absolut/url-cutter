@@ -12,12 +12,12 @@ func NewRouter(handler *handler.Handler) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(logger.WithFieldsInfo)
 
+	router.With(jwt.AuthMiddleware, compress.Decompress).Post("/", handler.PostHandler)
+	router.With(jwt.AuthMiddleware, compress.Decompress).Post("/api/shorten", handler.JSONPostHandler)
+	router.With(jwt.AuthMiddleware).Post("/api/shorten/batch", handler.PostBatchHandler)
+	router.With(compress.Compress).Post("/{id}", handler.GetHandler)
 	router.Delete("/api/user/urls", handler.DeleteUserURLs)
-	router.Post("/", jwt.AuthMiddleware(compress.Decompress(handler.PostHandler)))
-	router.Post("/api/shorten", jwt.AuthMiddleware(compress.Decompress(handler.JSONPostHandler)))
-	router.Post("/api/shorten/batch", jwt.AuthMiddleware(handler.PostBatchHandler))
 	router.Get("/api/user/urls", handler.GetUserURLs)
-	router.Get("/{id}", compress.Compress(handler.GetHandler))
 	router.Get("/ping", handler.CheckConnecToDB)
 	return router
 }
