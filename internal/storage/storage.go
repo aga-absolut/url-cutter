@@ -21,3 +21,8 @@ func NewStorage(config *config.Config, logger zap.SugaredLogger) repository.Stor
 	logger.Infow("config memory")
 	return memory.NewMemoryStorage()
 }
+
+func NewPGLinkRepository(config *config.Config, logger zap.SugaredLogger) repository.PGLinkRepository {
+	logger.Infow("config PostgreSQL")
+	return database.NewDBPostgreSQL(config, logger)
+}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
+	"github.com/aga-absolut/url-cutter/internal/util"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -77,7 +78,7 @@ func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatc
 	defer stmt.Close()
 
 	for _, v := range batch {
-		shortKey := config.Generate(v.OriginalURL)
+		shortKey := util.Generate(v.OriginalURL)
 		_, err = stmt.ExecContext(ctx, shortKey, v.OriginalURL, userID)
 		if err != nil {
 			var PgErr *pgconn.PgError
@@ -128,7 +129,7 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) ([]model.Sho
 	defer rows.Close()
 
 	for rows.Next() {
-		var url model.ShortenURLs 
+		var url model.ShortenURLs
 		err := rows.Scan(&url.ShortURL, &url.OriginalURL)
 		if err != nil {
 			s.Logger.Errorw("String scaning error", "error", err)
@@ -150,6 +151,13 @@ func (s *DBPostgreSQL) DeletedFlag(ctx context.Context, shortURL string) error {
 	query := `UPDATE urls SET is_deleted = true WHERE short_url = $1`
 	_, err := s.DB.ExecContext(ctx, query, shortURL)
 	return err
+}
+
+func (s *DBPostgreSQL) Ping() error {
+	if err := s.DB.Ping(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func InitMigrations(config *config.Config, logger zap.SugaredLogger) error {
