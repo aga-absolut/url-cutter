@@ -3,8 +3,6 @@ package memory
 import (
 	"context"
 	"os"
-
-	"github.com/aga-absolut/url-cutter/internal/model"
 )
 
 type MemoryStorage struct {
@@ -28,16 +26,4 @@ func (s *MemoryStorage) Set(ctx context.Context, shortURL, originalURL string, u
 func (s *MemoryStorage) Get(ctx context.Context, shortURL string) (string, bool) {
 	str, exist := s.data[shortURL]
 	return str, exist
-}
-
-func (s *MemoryStorage) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
-	return nil, nil
-}
-
-func (s *MemoryStorage) GetByUserID(ctx context.Context, userID int) (map[string]string, error) {
-	return nil, nil
-}
-
-func (s *MemoryStorage) DeletedFlag(ctx context.Context, shortURL string) error {
-	return nil
 }

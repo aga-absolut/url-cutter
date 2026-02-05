@@ -29,7 +29,7 @@ func NewConfig() *Config {
 	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "server host:port")
 	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")
 	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")             // storage.txt
-	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database") // postgres://postgres:absolute_1@localhost:5432/mydb
+	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database") // psql -U postgres -d mydb -W
 	flag.Parse()
 
 	if err := env.Parse(cfg); err != nil {

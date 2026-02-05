@@ -12,7 +12,8 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/handler"
 	"github.com/aga-absolut/url-cutter/internal/router"
 	"github.com/aga-absolut/url-cutter/internal/storage"
-	"github.com/aga-absolut/url-cutter/internal/worker"
+	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
+	"github.com/aga-absolut/url-cutter/internal/workers"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 )
 
@@ -24,9 +25,13 @@ func main() {
 
 	cfg := config.NewConfig()
 	logger := logger.NewLogger()
+	if err := database.InitMigrations(cfg, logger); err != nil {
+		logger.Fatalw("don`t create migrations", "error", err)
+	}
+	db := database.NewDBPostgreSQL(cfg, logger)
 	storage := storage.NewStorage(cfg, logger)
-	worker := worker.NewWorkerPool(ctx, deleteChan, storage, config.SizeWorkers)
-	handler := handler.NewHandler(cfg, storage, logger, deleteChan)
+	worker := workers.NewWorkerPool(ctx, deleteChan, db, config.SizeWorkers, logger)
+	handler := handler.NewHandler(cfg, storage, logger, deleteChan, db)
 	router := router.NewRouter(handler)
 
 	server := &http.Server{

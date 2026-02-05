@@ -7,19 +7,23 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose"
+
 	"go.uber.org/zap"
 )
 
 type DBPostgreSQL struct {
-	config *config.Config
-	db     *sql.DB
-	logger zap.SugaredLogger
+	Config *config.Config
+	DB     *sql.DB
+	Logger zap.SugaredLogger
 }
 
 func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgreSQL {
@@ -28,41 +32,20 @@ func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgre
 		log.Fatalf("cannot open db: %v", err)
 	}
 
-	// db.Exec("DROP TABLE IF EXISTS urls CASCADE;")
-
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS urls (
-			short_url TEXT NOT NULL PRIMARY KEY,
-			original_url TEXT NOT NULL,
-			user_id INTEGER NOT NULL,
-			is_deleted BOOLEAN DEFAULT FALSE
-		);
-	`)
-	if err != nil {
-		log.Fatalf("error creating table: %v", err)
-	}
-
-	_, err = db.Exec(`
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_original_url
-		ON urls(original_url);
-	`)
-	if err != nil {
-		log.Fatalf("error creating index: %v", err)
-	}
-
 	return &DBPostgreSQL{
-		db:     db,
-		config: config,
-		logger: logger,
+		DB:     db,
+		Config: config,
+		Logger: logger,
 	}
 }
 
 func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
-	tx, err := s.db.Begin()
+	tx, err := s.DB.Begin()
 	if err != nil {
 		return "", fmt.Errorf("error add tx: %w", err)
 	}
 	defer tx.Rollback()
+
 	_, err = tx.ExecContext(ctx, `INSERT INTO urls (short_url, original_url, user_id)
     VALUES ($1, $2, $3)`, shortURL, originalURL, userID)
 	if err != nil {
@@ -71,7 +54,7 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 			tx.Rollback()
 
 			var shortKey string
-			row := s.db.QueryRowContext(ctx, `SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
+			row := s.DB.QueryRowContext(ctx, `SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
 			if err := row.Scan(&shortKey); err != nil {
 				return "", fmt.Errorf("error scaning query row: %w", err)
 			}
@@ -85,10 +68,9 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 	return "", nil
 }
 
-
 func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	var response []model.ShortenResponseItem
-	stmt, err := s.db.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
+	stmt, err := s.DB.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
 	if err != nil {
 		return nil, fmt.Errorf("error add stmt: %w", err)
 	}
@@ -108,11 +90,11 @@ func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatc
 		}
 
 		response = append(response, model.ShortenResponseItem{
-			ShortURL:      s.config.Host + "/" + shortKey,
+			ShortURL:      s.Config.Host + "/" + shortKey,
 			CorrelationID: v.CorrelationID,
 		})
 	}
-	
+
 	return response, nil
 }
 
@@ -122,7 +104,7 @@ func (s *DBPostgreSQL) Get(ctx context.Context, shortURL string) (string, bool) 
 		originalURL string
 	)
 
-	row := s.db.QueryRowContext(ctx, `SELECT is_deleted, original_url FROM urls WHERE short_url = $1`, shortURL)
+	row := s.DB.QueryRowContext(ctx, `SELECT is_deleted, original_url FROM urls WHERE short_url = $1`, shortURL)
 
 	err := row.Scan(&deletedFlag, &originalURL)
 	if deletedFlag {
@@ -140,9 +122,9 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) (map[string]
 	var originalURL string
 	mapURLs := make(map[string]string)
 
-	rows, err := s.db.QueryContext(ctx, `SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
+	rows, err := s.DB.QueryContext(ctx, `SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
 	if err != nil {
-		s.logger.Errorw("request completion error", "error", err, "userID", userID)
+		s.Logger.Errorw("request completion error", "error", err, "userID", userID)
 		return nil, err
 	}
 	defer rows.Close()
@@ -150,14 +132,14 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) (map[string]
 	for rows.Next() {
 		err := rows.Scan(&shortURL, &originalURL)
 		if err != nil {
-			s.logger.Errorw("String scaning error", "error", err)
+			s.Logger.Errorw("String scaning error", "error", err)
 			return nil, err
 		}
 		mapURLs[shortURL] = originalURL
 	}
 
 	if err := rows.Err(); err != nil {
-		s.logger.Errorw("error rows", "error", err)
+		s.Logger.Errorw("error rows", "error", err)
 		return nil, err
 	}
 
@@ -166,6 +148,26 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) (map[string]
 
 func (s *DBPostgreSQL) DeletedFlag(ctx context.Context, shortURL string) error {
 	query := `UPDATE urls SET is_deleted = true WHERE short_url = $1`
-	_, err := s.db.ExecContext(ctx, query, shortURL)
+	_, err := s.DB.ExecContext(ctx, query, shortURL)
 	return err
+}
+
+func InitMigrations(config *config.Config, logger zap.SugaredLogger) error {
+	logger.Infow("Starting migrations")
+	db, err := sql.Open("pgx", config.DBDSN)
+	if err != nil {
+		logger.Errorw("Error create migrations to DB: ", "error", err)
+		return err
+	}
+	defer db.Close()
+
+	_, filename, _, _ := runtime.Caller(0)
+	migrationsPath := filepath.Join(filepath.Dir(filename), "..", "migrations")
+
+	err = goose.Up(db, migrationsPath)
+	if err != nil {
+		logger.Errorw("Error migrations: ", "error", err)
+		return err
+	}
+	return nil
 }

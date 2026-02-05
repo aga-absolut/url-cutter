@@ -3,9 +3,9 @@ package storage
 import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/repository"
-	"github.com/aga-absolut/url-cutter/internal/storage/database"
 	"github.com/aga-absolut/url-cutter/internal/storage/file"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
+	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
 	"go.uber.org/zap"
 )
 

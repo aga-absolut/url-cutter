@@ -10,6 +10,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
 	"github.com/aga-absolut/url-cutter/middleware/jwt"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
@@ -48,10 +49,13 @@ func TestHandle(t *testing.T) {
 	}
 	deleteCh := make(chan string)
 	log := logger.NewLogger()
+	db := &database.DBPostgreSQL{
+		Config: cfg,
+	}
 	storage := storage.NewStorage(cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(cfg, storage, log, deleteCh)
+			hand := NewHandler(cfg, storage, log, deleteCh, db)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -61,7 +65,7 @@ func TestHandle(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
 
-			token, _ := jwt.BuildJWTString() 
+			token, _ := jwt.BuildJWTString()
 			req.AddCookie(&http.Cookie{
 				Name:  "token",
 				Value: token,
@@ -121,19 +125,21 @@ func TestPostReqJSON(t *testing.T) {
 		FilePath:      "storage.txt",
 	}
 	log := logger.NewLogger()
+	db := &database.DBPostgreSQL{
+		Config: cfg,
+	}
 	deleteCh := make(chan string)
 	storage := storage.NewStorage(cfg, log)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(cfg, storage, log, deleteCh)
+			handler := NewHandler(cfg, storage, log, deleteCh, db)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)
 
 			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
 
-			token, _ := jwt.BuildJWTString() 
+			token, _ := jwt.BuildJWTString()
 			req.AddCookie(&http.Cookie{
 				Name:  "token",
 				Value: token,

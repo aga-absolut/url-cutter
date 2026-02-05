@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"io"
@@ -11,6 +10,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/repository"
+	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
 	"github.com/aga-absolut/url-cutter/middleware/jwt"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -20,16 +20,18 @@ import (
 type Handler struct {
 	config     *config.Config
 	logger     *zap.SugaredLogger
+	SQLDB      *database.DBPostgreSQL
 	storage    repository.Storage
 	deleteChan chan string
 }
 
-func NewHandler(config *config.Config, storage repository.Storage, logger zap.SugaredLogger, deleteChan chan string) *Handler {
+func NewHandler(config *config.Config, storage repository.Storage, logger zap.SugaredLogger, deleteChan chan string, SQLDB *database.DBPostgreSQL) *Handler {
 	handler := &Handler{
 		storage:    storage,
 		config:     config,
-		logger:     &logger,
 		deleteChan: deleteChan,
+		SQLDB:      SQLDB,
+		logger:     &logger,
 	}
 	return handler
 }
@@ -76,7 +78,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
 		return
 	}
-
+	// максимум до чего я додумался, это просто возвращать ошиюку ахах
 	userID, err := jwt.GetUserID(cookie.Value)
 	if err != nil {
 		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
@@ -84,7 +86,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mapURLs, err := h.storage.GetByUserID(r.Context(), userID)
+	mapURLs, err := h.SQLDB.GetByUserID(r.Context(), userID)
 	if err != nil {
 		h.logger.Errorw("Failed to get user URLs", "error", err, "userID", userID)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -106,13 +108,9 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// здесь короче я не оч понял что нажо сделать, но вроде правильно теперь
 func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
-	db, err := sql.Open("pgx", h.config.DBDSN)
-	if err != nil {
-		http.Error(w, "error open database", http.StatusBadRequest)
-		return
-	}
-	if err := db.Ping(); err != nil {
+	if err := h.SQLDB.DB.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -124,7 +122,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	if len(originalURL) == 0 {
 		http.Error(w, "error empty body", http.StatusBadRequest)
 	}
@@ -197,7 +195,7 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.storage.SetBatchURL(r.Context(), batch, userID)
+	response, err := h.SQLDB.SetBatchURL(r.Context(), batch, userID)
 	if err != nil {
 		h.logger.Errorw("error set batch url", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -219,6 +217,11 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	if len(JSONRequest.URL) == 0 {
+		http.Error(w, "error batch is empty", http.StatusBadRequest)
+		return
+	}
 
 	cookie, err := r.Cookie("token")
 	if err != nil {

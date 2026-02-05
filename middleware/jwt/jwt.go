@@ -3,7 +3,6 @@ package jwt
 import (
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
@@ -15,14 +14,9 @@ type Claims struct {
 	UserID int
 }
 
-var (
-	userID int
-	mu     sync.Mutex
-)
+var userID int
 
 func NewUserID() int {
-	mu.Lock()
-	defer mu.Unlock()
 	userID++
 	return userID
 }

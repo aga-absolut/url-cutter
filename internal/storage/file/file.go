@@ -124,15 +124,3 @@ func (f *File) Get(ctx context.Context, shortURL string) (string, bool) {
 	}
 	return "", false
 }
-
-func (f *File) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
-	return nil, nil
-}
-
-func (f *File) GetByUserID(ctx context.Context, userID int) (map[string]string, error) {
-	return nil, nil
-}
-
-func (f *File) DeletedFlag(ctx context.Context, shortURL string) error {
-	return nil
-}

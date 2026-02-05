@@ -1,25 +1,27 @@
-package worker
+package workers
 
 import (
 	"context"
-	"log"
 	"sync"
 
-	"github.com/aga-absolut/url-cutter/internal/repository"
+	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
+	"go.uber.org/zap"
 )
 
 type Worker struct {
 	deleteChan chan string
-	storage    repository.Storage
+	SQLDB      *database.DBPostgreSQL
+	logger     zap.SugaredLogger
 	wg         sync.WaitGroup
 	size       int
 }
 
-func NewWorkerPool(ctx context.Context, deletedChan chan string, storage repository.Storage, size int) *Worker {
+func NewWorkerPool(ctx context.Context, deletedChan chan string, SQLDB *database.DBPostgreSQL, size int, logger zap.SugaredLogger) *Worker {
 	w := &Worker{
 		deleteChan: deletedChan,
-		storage:    storage,
+		SQLDB:      SQLDB,
 		size:       size,
+		logger:     logger,
 	}
 
 	w.wg.Add(size)
@@ -39,8 +41,8 @@ func (w *Worker) worker(ctx context.Context) {
 			if !ok {
 				return
 			}
-			if err := w.storage.DeletedFlag(ctx, shortURL); err != nil {
-				log.Printf("Failed to delete %s: %v", shortURL, err)
+			if err := w.SQLDB.DeletedFlag(ctx, shortURL); err != nil {
+				w.logger.Errorw("Failed to delete %s: %v", shortURL, err)
 				return
 			}
 		}
