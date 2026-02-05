@@ -25,8 +25,10 @@ func main() {
 
 	cfg := config.NewConfig()
 	logger := logger.NewLogger()
-	if err := database.InitMigrations(cfg, logger); err != nil {
-		logger.Fatalw("don`t create migrations", "error", err)
+	if cfg.DBDSN != "" {
+		if err := database.InitMigrations(cfg, logger); err != nil {
+			logger.Fatalw("don`t create migrations", "error", err)
+		}
 	}
 	db := database.NewDBPostgreSQL(cfg, logger)
 	storage := storage.NewStorage(cfg, logger)
