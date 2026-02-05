@@ -1,29 +1,45 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"flag"
+	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/caarlos0/env/v11"
+)
+
+var (
+	SecretKey    = []byte("my_secret_key")
+	TokenExpTime = time.Hour * 3
+	SizeWorkers  = 1
 )
 
 type Config struct {
 	ServerAddress string `env:"SERVER_ADDRESS"`
 	Host          string `env:"BASE_URL"`
 	FilePath      string `env:"FILE_STORAGE_PATH"`
-	Symbols       []byte
+	DBDSN         string `env:"DATABASE_DSN"`
 }
 
 func NewConfig() *Config {
 	cfg := &Config{}
-	cfg.Symbols = []byte("QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm")
-
 	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "server host:port")
 	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")
-	flag.StringVar(&cfg.FilePath, "f", "storage.txt", "storage filename")
+	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")             // storage.txt
+	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database") // psql -U postgres -d mydb -W
 	flag.Parse()
 
 	if err := env.Parse(cfg); err != nil {
 		panic(err)
 	}
 	return cfg
+}
+
+func Generate(originalURL string) string {
+	salt := rand.Intn(9999)
+	data := sha256.Sum224([]byte(fmt.Sprintf("%s%d", originalURL, salt)))
+	return hex.EncodeToString(data[:4])
 }

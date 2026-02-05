@@ -2,7 +2,10 @@ package file
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -14,66 +17,89 @@ import (
 type File struct {
 	UUID   int
 	config *config.Config
-	logger zap.SugaredLogger
+	logger *zap.SugaredLogger
 }
 
-func NewFile(config *config.Config, logger zap.SugaredLogger) *File {
+func NewFile(config *config.Config, logger *zap.SugaredLogger) *File {
 	return &File{config: config, logger: logger}
 }
 
-func UpdateCounter() (string, error) {
-	file, err := os.ReadFile("counter.txt")
+func (f *File) checkFile(originalURL string) (string, error) {
+	file, err := os.Open(f.config.FilePath)
 	if err != nil {
-		os.WriteFile("counter.txt", []byte("1"), 0666)
-		return "1", nil
-	}
-	militaryCounter, err := strconv.Atoi(string(file))
-	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
 		return "", err
 	}
-	militaryCounter += 1
-	counter := strconv.Itoa(militaryCounter)
-	err = os.WriteFile("counter.txt", []byte(counter), 0666)
-	if err != nil {
-		return "", err
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+		var data model.JSONStructForFile
+		if err := json.Unmarshal([]byte(line), &data); err != nil {
+			f.logger.Errorw("Error parcing line:", "Error", err)
+		}
+		if data.OriginalURL == originalURL {
+			f.logger.Infow("Succes work originalURL:", "URL", originalURL)
+			return data.ShortURL, fmt.Errorf("not unique URL")
+		}
 	}
-	return counter, nil
+	if err := scanner.Err(); err != nil {
+		f.logger.Errorw("Error parcing file:", "Error", err)
+	}
+	return "", nil
 }
 
-func (f *File) Save(shortURL, originalURL string) error {
+func (f *File) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
+	if shortKey, err := f.checkFile(originalURL); err != nil {
+		if errors.Is(err, nil) {
+			return shortKey, os.ErrExist
+		}
+		return "", err
+	}
+
 	f.UUID++
 	UUID := strconv.Itoa(f.UUID)
-
 	data := model.JSONStructForFile{
 		UUID:        UUID,
 		ShortURL:    shortURL,
 		OriginalURL: originalURL,
 	}
+
 	result, err := json.Marshal(data)
 	if err != nil {
 		f.logger.Errorw("Error marshal file:", "Error", shortURL)
-		return err
+		return "", err
 	}
 	result = append(result, '\n')
+
 	file, err := os.OpenFile(f.config.FilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		f.logger.Errorw("Error open file:", "Error", shortURL)
-		return err
+		return "", err
 	}
 	defer file.Close()
+
 	if _, err = file.Write(result); err != nil {
 		f.logger.Errorw("Error write file:", "Error", shortURL)
-		return err
+		return "", err
 	}
-	return nil
+	return "", nil
 }
 
-func (f *File) ReadFile(shortURL string) (string, bool) {
+func (f *File) Get(ctx context.Context, shortURL string) (string, bool) {
 	file, err := os.Open(f.config.FilePath)
 	if err != nil {
-		f.logger.Errorw("Error open file:", "Error", shortURL)
+		f.logger.Errorw("Error open file:", "Error", err)
 		return "", false
 	}
+	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -97,4 +123,20 @@ func (f *File) ReadFile(shortURL string) (string, bool) {
 		f.logger.Errorw("Error parcing file:", "Error", err)
 	}
 	return "", false
+}
+
+func (f *File) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
+	return nil, nil
+}
+
+func (f *File) GetByUserID(ctx context.Context, userID int) ([]model.ShortenURLs, error) {
+	return nil, nil
+}
+
+func (f *File) DeletedFlag(ctx context.Context, shortURL string) error {
+	return nil
+}
+
+func (f *File) Ping() error {
+	return nil
 }

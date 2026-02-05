@@ -32,14 +32,14 @@ func (r *LoggingResponseWriter) WriteHeader(statuscode int) {
 	r.responseData.status = statuscode
 }
 
-func NewLogger() zap.SugaredLogger {
+func NewLogger() *zap.SugaredLogger {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
 		panic(err)
 	}
 	defer logger.Sync()
 	sugar = logger.Sugar()
-	return *sugar
+	return sugar
 }
 
 func WithFieldsInfo(h http.Handler) http.Handler {
