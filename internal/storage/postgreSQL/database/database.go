@@ -117,10 +117,8 @@ func (s *DBPostgreSQL) Get(ctx context.Context, shortURL string) (string, bool) 
 	return originalURL, true
 }
 
-func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) (map[string]string, error) {
-	var shortURL string
-	var originalURL string
-	mapURLs := make(map[string]string)
+func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) ([]model.ShortenURLs, error) {
+	var URLs []model.ShortenURLs
 
 	rows, err := s.DB.QueryContext(ctx, `SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
 	if err != nil {
@@ -130,12 +128,14 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) (map[string]
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&shortURL, &originalURL)
+		var url model.ShortenURLs 
+		err := rows.Scan(&url.ShortURL, &url.OriginalURL)
 		if err != nil {
 			s.Logger.Errorw("String scaning error", "error", err)
 			return nil, err
 		}
-		mapURLs[shortURL] = originalURL
+		url.ShortURL = s.Config.Host + "/" + url.ShortURL
+		URLs = append(URLs, url)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -143,7 +143,7 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) (map[string]
 		return nil, err
 	}
 
-	return mapURLs, nil
+	return URLs, nil
 }
 
 func (s *DBPostgreSQL) DeletedFlag(ctx context.Context, shortURL string) error {

@@ -53,7 +53,6 @@ func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
-	var ShortenURLs []model.ShortenURLs
 	cookie, err := r.Cookie("token")
 	if err != nil {
 		if err == http.ErrNoCookie {
@@ -78,7 +77,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid cookie", http.StatusUnauthorized)
 		return
 	}
-	// максимум до чего я додумался, это просто возвращать ошиюку ахах
+
 	userID, err := jwt.GetUserID(cookie.Value)
 	if err != nil {
 		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
@@ -86,23 +85,16 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mapURLs, err := h.SQLDB.GetByUserID(r.Context(), userID)
+	URLs, err := h.SQLDB.GetByUserID(r.Context(), userID)
 	if err != nil {
 		h.logger.Errorw("Failed to get user URLs", "error", err, "userID", userID)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	for shortKey, originalURL := range mapURLs {
-		ShortenURLs = append(ShortenURLs, model.ShortenURLs{
-			ShortURL:    h.config.Host + "/" + shortKey,
-			OriginalURL: originalURL,
-		})
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(ShortenURLs); err != nil {
+	if err := json.NewEncoder(w).Encode(URLs); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
