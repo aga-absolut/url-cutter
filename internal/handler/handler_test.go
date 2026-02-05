@@ -48,11 +48,10 @@ func TestHandle(t *testing.T) {
 	}
 	deleteCh := make(chan string)
 	log := logger.NewLogger()
-	linkRepo := storage.NewPGLinkRepository(cfg, log)
 	storage := storage.NewStorage(cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(cfg, storage, log, deleteCh, linkRepo)
+			hand := NewHandler(cfg, storage, log, deleteCh)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -122,12 +121,11 @@ func TestPostReqJSON(t *testing.T) {
 		FilePath:      "storage.txt",
 	}
 	log := logger.NewLogger()
-	linkRepo := storage.NewPGLinkRepository(cfg, log)
 	deleteCh := make(chan string)
 	storage := storage.NewStorage(cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(cfg, storage, log, deleteCh, linkRepo)
+			handler := NewHandler(cfg, storage, log, deleteCh)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)

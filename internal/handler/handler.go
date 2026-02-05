@@ -19,17 +19,15 @@ import (
 type Handler struct {
 	config     *config.Config
 	logger     *zap.SugaredLogger
-	linkRepo   repository.PGLinkRepository
 	storage    repository.Storage
 	deleteChan chan string
 }
 
-func NewHandler(config *config.Config, storage repository.Storage, logger *zap.SugaredLogger, deleteChan chan string, linkRepo repository.PGLinkRepository) *Handler {
+func NewHandler(config *config.Config, storage repository.Storage, logger *zap.SugaredLogger, deleteChan chan string) *Handler {
 	handler := &Handler{
 		storage:    storage,
 		config:     config,
 		deleteChan: deleteChan,
-		linkRepo:   linkRepo,
 		logger:     logger,
 	}
 	return handler
@@ -84,7 +82,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	URLs, err := h.linkRepo.GetByUserID(r.Context(), userID)
+	URLs, err := h.storage.GetByUserID(r.Context(), userID)
 	if err != nil {
 		h.logger.Errorw("Failed to get user URLs", "error", err, "userID", userID)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -100,7 +98,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
-	if err := h.linkRepo.Ping(); err != nil {
+	if err := h.storage.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -185,7 +183,7 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.linkRepo.SetBatchURL(r.Context(), batch, userID)
+	response, err := h.storage.SetBatchURL(r.Context(), batch, userID)
 	if err != nil {
 		h.logger.Errorw("error set batch url", "error", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)

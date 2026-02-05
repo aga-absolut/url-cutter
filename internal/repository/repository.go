@@ -9,11 +9,9 @@ import (
 type Storage interface {
 	Get(ctx context.Context, shortURL string) (string, bool)
 	Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error)
-}
-
-type PGLinkRepository interface {
 	SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error)
 	GetByUserID(ctx context.Context, userID int) ([]model.ShortenURLs, error)
 	DeletedFlag(ctx context.Context, shortURL string) error
 	Ping() error
 }
+

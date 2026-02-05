@@ -29,10 +29,9 @@ func main() {
 			logger.Fatalw("don`t create migrations", "error", err)
 		}
 	}
-	linkRepo := storage.NewPGLinkRepository(cfg, logger)
 	storage := storage.NewStorage(cfg, logger)
-	worker := workers.NewWorkerPool(ctx, deleteChan, linkRepo, config.SizeWorkers, logger)
-	handler := handler.NewHandler(cfg, storage, logger, deleteChan, linkRepo)
+	worker := workers.NewWorkerPool(ctx, deleteChan, storage, config.SizeWorkers, logger)
+	handler := handler.NewHandler(cfg, storage, logger, deleteChan)
 	router := router.NewRouter(handler)
 
 	server := &http.Server{
