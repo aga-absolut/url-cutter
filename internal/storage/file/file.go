@@ -17,10 +17,10 @@ import (
 type File struct {
 	UUID   int
 	config *config.Config
-	logger zap.SugaredLogger
+	logger *zap.SugaredLogger
 }
 
-func NewFile(config *config.Config, logger zap.SugaredLogger) *File {
+func NewFile(config *config.Config, logger *zap.SugaredLogger) *File {
 	return &File{config: config, logger: logger}
 }
 

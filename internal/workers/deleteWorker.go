@@ -11,12 +11,12 @@ import (
 type Worker struct {
 	deleteChan chan string
 	linkRepo   repository.PGLinkRepository
-	logger     zap.SugaredLogger
+	logger     *zap.SugaredLogger
 	wg         sync.WaitGroup
 	size       int
 }
 
-func NewWorkerPool(ctx context.Context, deletedChan chan string, linkRepo repository.PGLinkRepository, size int, logger zap.SugaredLogger) *Worker {
+func NewWorkerPool(ctx context.Context, deletedChan chan string, linkRepo repository.PGLinkRepository, size int, logger *zap.SugaredLogger) *Worker {
 	w := &Worker{
 		deleteChan: deletedChan,
 		linkRepo:   linkRepo,
@@ -24,11 +24,15 @@ func NewWorkerPool(ctx context.Context, deletedChan chan string, linkRepo reposi
 		logger:     logger,
 	}
 
+	w.Start(ctx, size)
+	return w
+}
+
+func (w *Worker) Start(ctx context.Context, size int) {
 	w.wg.Add(size)
 	for i := 0; i < size; i++ {
 		go w.worker(ctx)
 	}
-	return w
 }
 
 func (w *Worker) worker(ctx context.Context) {

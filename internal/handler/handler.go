@@ -18,13 +18,13 @@ import (
 
 type Handler struct {
 	config     *config.Config
-	logger     zap.SugaredLogger
+	logger     *zap.SugaredLogger
 	linkRepo   repository.PGLinkRepository
 	storage    repository.Storage
 	deleteChan chan string
 }
 
-func NewHandler(config *config.Config, storage repository.Storage, logger zap.SugaredLogger, deleteChan chan string, linkRepo repository.PGLinkRepository) *Handler {
+func NewHandler(config *config.Config, storage repository.Storage, logger *zap.SugaredLogger, deleteChan chan string, linkRepo repository.PGLinkRepository) *Handler {
 	handler := &Handler{
 		storage:    storage,
 		config:     config,

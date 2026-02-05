@@ -22,26 +22,26 @@ import (
 )
 
 type DBPostgreSQL struct {
-	Config *config.Config
-	DB     *sql.DB
-	Logger zap.SugaredLogger
+	config *config.Config
+	db     *sql.DB
+	logger *zap.SugaredLogger
 }
 
-func NewDBPostgreSQL(config *config.Config, logger zap.SugaredLogger) *DBPostgreSQL {
+func NewDBPostgreSQL(config *config.Config, logger *zap.SugaredLogger) *DBPostgreSQL {
 	db, err := sql.Open("pgx", config.DBDSN)
 	if err != nil {
 		log.Fatalf("cannot open db: %v", err)
 	}
 
 	return &DBPostgreSQL{
-		DB:     db,
-		Config: config,
-		Logger: logger,
+		db:     db,
+		config: config,
+		logger: logger,
 	}
 }
 
 func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
-	tx, err := s.DB.Begin()
+	tx, err := s.db.Begin()
 	if err != nil {
 		return "", fmt.Errorf("error add tx: %w", err)
 	}
@@ -55,7 +55,7 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 			tx.Rollback()
 
 			var shortKey string
-			row := s.DB.QueryRowContext(ctx, `SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
+			row := s.db.QueryRowContext(ctx, `SELECT short_url FROM urls WHERE original_url = $1`, originalURL)
 			if err := row.Scan(&shortKey); err != nil {
 				return "", fmt.Errorf("error scaning query row: %w", err)
 			}
@@ -71,7 +71,7 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 
 func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	var response []model.ShortenResponseItem
-	stmt, err := s.DB.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
+	stmt, err := s.db.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
 	if err != nil {
 		return nil, fmt.Errorf("error add stmt: %w", err)
 	}
@@ -91,7 +91,7 @@ func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatc
 		}
 
 		response = append(response, model.ShortenResponseItem{
-			ShortURL:      s.Config.Host + "/" + shortKey,
+			ShortURL:      s.config.Host + "/" + shortKey,
 			CorrelationID: v.CorrelationID,
 		})
 	}
@@ -105,7 +105,7 @@ func (s *DBPostgreSQL) Get(ctx context.Context, shortURL string) (string, bool) 
 		originalURL string
 	)
 
-	row := s.DB.QueryRowContext(ctx, `SELECT is_deleted, original_url FROM urls WHERE short_url = $1`, shortURL)
+	row := s.db.QueryRowContext(ctx, `SELECT is_deleted, original_url FROM urls WHERE short_url = $1`, shortURL)
 
 	err := row.Scan(&deletedFlag, &originalURL)
 	if deletedFlag {
@@ -121,9 +121,9 @@ func (s *DBPostgreSQL) Get(ctx context.Context, shortURL string) (string, bool) 
 func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) ([]model.ShortenURLs, error) {
 	var URLs []model.ShortenURLs
 
-	rows, err := s.DB.QueryContext(ctx, `SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
+	rows, err := s.db.QueryContext(ctx, `SELECT short_url, original_url FROM urls WHERE user_id = $1`, userID)
 	if err != nil {
-		s.Logger.Errorw("request completion error", "error", err, "userID", userID)
+		s.logger.Errorw("request completion error", "error", err, "userID", userID)
 		return nil, err
 	}
 	defer rows.Close()
@@ -132,15 +132,15 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) ([]model.Sho
 		var url model.ShortenURLs
 		err := rows.Scan(&url.ShortURL, &url.OriginalURL)
 		if err != nil {
-			s.Logger.Errorw("String scaning error", "error", err)
+			s.logger.Errorw("String scaning error", "error", err)
 			return nil, err
 		}
-		url.ShortURL = s.Config.Host + "/" + url.ShortURL
+		url.ShortURL = s.config.Host + "/" + url.ShortURL
 		URLs = append(URLs, url)
 	}
 
 	if err := rows.Err(); err != nil {
-		s.Logger.Errorw("error rows", "error", err)
+		s.logger.Errorw("error rows", "error", err)
 		return nil, err
 	}
 
@@ -149,18 +149,18 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) ([]model.Sho
 
 func (s *DBPostgreSQL) DeletedFlag(ctx context.Context, shortURL string) error {
 	query := `UPDATE urls SET is_deleted = true WHERE short_url = $1`
-	_, err := s.DB.ExecContext(ctx, query, shortURL)
+	_, err := s.db.ExecContext(ctx, query, shortURL)
 	return err
 }
 
 func (s *DBPostgreSQL) Ping() error {
-	if err := s.DB.Ping(); err != nil {
+	if err := s.db.Ping(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func InitMigrations(config *config.Config, logger zap.SugaredLogger) error {
+func InitMigrations(config *config.Config, logger *zap.SugaredLogger) error {
 	logger.Infow("Starting migrations")
 	db, err := sql.Open("pgx", config.DBDSN)
 	if err != nil {

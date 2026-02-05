@@ -10,7 +10,6 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage"
-	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
 	"github.com/aga-absolut/url-cutter/middleware/jwt"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
@@ -49,13 +48,11 @@ func TestHandle(t *testing.T) {
 	}
 	deleteCh := make(chan string)
 	log := logger.NewLogger()
-	db := &database.DBPostgreSQL{
-		Config: cfg,
-	}
+	linkRepo := storage.NewPGLinkRepository(cfg, log)
 	storage := storage.NewStorage(cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(cfg, storage, log, deleteCh, db)
+			hand := NewHandler(cfg, storage, log, deleteCh, linkRepo)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -125,14 +122,12 @@ func TestPostReqJSON(t *testing.T) {
 		FilePath:      "storage.txt",
 	}
 	log := logger.NewLogger()
-	db := &database.DBPostgreSQL{
-		Config: cfg,
-	}
+	linkRepo := storage.NewPGLinkRepository(cfg, log)
 	deleteCh := make(chan string)
 	storage := storage.NewStorage(cfg, log)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(cfg, storage, log, deleteCh, db)
+			handler := NewHandler(cfg, storage, log, deleteCh, linkRepo)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)

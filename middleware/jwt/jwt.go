@@ -16,18 +16,13 @@ type Claims struct {
 
 var userID int
 
-func NewUserID() int {
-	userID++
-	return userID
-}
-
 func BuildJWTString() (string, error) {
-	localUserID := NewUserID()
+	userID++
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(config.TokenExpTime)),
 		},
-		UserID: localUserID,
+		UserID: userID,
 	})
 
 	tokenString, err := token.SignedString(config.SecretKey)

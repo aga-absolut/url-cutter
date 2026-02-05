@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewStorage(config *config.Config, logger zap.SugaredLogger) repository.Storage {
+func NewStorage(config *config.Config, logger *zap.SugaredLogger) repository.Storage {
 	if config.DBDSN != "" {
 		logger.Infow("config PostgreSQL")
 		return database.NewDBPostgreSQL(config, logger)
@@ -22,7 +22,7 @@ func NewStorage(config *config.Config, logger zap.SugaredLogger) repository.Stor
 	return memory.NewMemoryStorage()
 }
 
-func NewPGLinkRepository(config *config.Config, logger zap.SugaredLogger) repository.PGLinkRepository {
+func NewPGLinkRepository(config *config.Config, logger *zap.SugaredLogger) repository.PGLinkRepository {
 	logger.Infow("config PostgreSQL")
 	return database.NewDBPostgreSQL(config, logger)
 }
