@@ -22,7 +22,6 @@ func main() {
 	defer stop()
 
 	deleteChan := make(chan string, 10)
-
 	cfg := config.NewConfig()
 	logger := logger.NewLogger()
 	if cfg.DBDSN != "" {
@@ -30,10 +29,10 @@ func main() {
 			logger.Fatalw("don`t create migrations", "error", err)
 		}
 	}
-	db := database.NewDBPostgreSQL(cfg, logger)
+	linkRepo := storage.NewPGLinkRepository(cfg, logger)
 	storage := storage.NewStorage(cfg, logger)
-	worker := workers.NewWorkerPool(ctx, deleteChan, db, config.SizeWorkers, logger)
-	handler := handler.NewHandler(cfg, storage, logger, deleteChan, db)
+	worker := workers.NewWorkerPool(ctx, deleteChan, linkRepo, config.SizeWorkers, logger)
+	handler := handler.NewHandler(cfg, storage, logger, deleteChan, linkRepo)
 	router := router.NewRouter(handler)
 
 	server := &http.Server{
