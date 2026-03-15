@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage"
+	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/aga-absolut/url-cutter/middleware/jwt"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
@@ -152,6 +154,29 @@ func TestPostReqJSON(t *testing.T) {
 			resp := model.JSONResponse{}
 			err := json.Unmarshal(w.Body.Bytes(), &resp)
 			assert.NoError(t, err, "Failed to conver to Json")
+		})
+	}
+}
+
+func Benchmark(b *testing.B) {
+	shortURL := "http://localhost:Afhbwof2"
+	cfg := &config.Config{ServerAddress: "http://localhost:8080/"}
+	memory := memory.NewMemoryStorage()
+	memory.Set(context.Background(), shortURL, "https://yandex.ru", 0)
+
+	handler := Handler{
+		config:  cfg,
+		storage: memory,
+	}
+	request := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(shortURL))
+	request.Header.Set("Content-Type", "application/json")
+	recoder := httptest.NewRecorder()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.Run("getHandler benchmark", func(b *testing.B) {
+			recoder = httptest.NewRecorder()
+			handler.GetHandler(recoder, request)
 		})
 	}
 }
