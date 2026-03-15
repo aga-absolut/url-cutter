@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	_ "net/http/pprof"
+
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage"
@@ -16,7 +18,6 @@ import (
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
-	_ "net/http/pprof"
 )
 
 func TestHandle(t *testing.T) {

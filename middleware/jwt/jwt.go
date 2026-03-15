@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/golang-jwt/jwt/v4"
+
+	"github.com/aga-absolut/url-cutter/internal/config"
 )
 
 type Claims struct {

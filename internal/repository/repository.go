@@ -14,4 +14,3 @@ type Storage interface {
 	DeletedFlag(ctx context.Context, shortURL string) error
 	Ping() error
 }
-
