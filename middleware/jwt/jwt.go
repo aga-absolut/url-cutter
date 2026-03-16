@@ -10,13 +10,15 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 )
 
+var userID int
+
+// Claims структура.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID int
 }
 
-var userID int
-
+// BuildJWTString генерирует JWT токен.
 func BuildJWTString() (string, error) {
 	userID++
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
@@ -34,6 +36,7 @@ func BuildJWTString() (string, error) {
 	return tokenString, nil
 }
 
+// GetUserID извлекает ID пользователя с помощью JWT токена.
 func GetUserID(tokenString string) (int, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
@@ -51,6 +54,7 @@ func GetUserID(tokenString string) (int, error) {
 	return claims.UserID, nil
 }
 
+// AuthMiddleware проверяет пользователя на авторизованность и создает новую куки если ее нет.
 func AuthMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := r.Cookie("token")

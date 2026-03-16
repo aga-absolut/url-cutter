@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Worker структура.
 type Worker struct {
 	deleteChan chan string
 	storage    repository.Storage
@@ -16,6 +17,7 @@ type Worker struct {
 	size       int
 }
 
+// NewWorkerPool создает новый WorkerPool.
 func NewWorkerPool(ctx context.Context, deletedChan chan string, storage repository.Storage, size int, logger *zap.SugaredLogger) *Worker {
 	w := &Worker{
 		deleteChan: deletedChan,
@@ -28,6 +30,7 @@ func NewWorkerPool(ctx context.Context, deletedChan chan string, storage reposit
 	return w
 }
 
+// Start создает воркеров.
 func (w *Worker) Start(ctx context.Context, size int) {
 	w.wg.Add(size)
 	for i := 0; i < size; i++ {
@@ -35,6 +38,7 @@ func (w *Worker) Start(ctx context.Context, size int) {
 	}
 }
 
+// worker ждет сигнал контекста или данные из канала.
 func (w *Worker) worker(ctx context.Context) {
 	defer w.wg.Done()
 	for {
@@ -53,6 +57,7 @@ func (w *Worker) worker(ctx context.Context) {
 	}
 }
 
+// Stop закрывает канал.
 func (w *Worker) Stop() {
 	close(w.deleteChan)
 	w.wg.Wait()
