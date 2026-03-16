@@ -37,9 +37,10 @@ func ExampleHandler_PostHandler() {
 	recoder := httptest.NewRecorder()
 
 	h := http.HandlerFunc(handler.PostHandler)
-
 	h.ServeHTTP(recoder, request)
+
 	resp := recoder.Result()
+	resp.Body.Close()
 
 	fmt.Println(resp.StatusCode)
 
