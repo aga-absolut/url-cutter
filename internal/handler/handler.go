@@ -10,12 +10,14 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/repository"
+	"github.com/aga-absolut/url-cutter/internal/util"
 	"github.com/aga-absolut/url-cutter/middleware/jwt"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
 )
 
+// Структура обработчика
 type Handler struct {
 	config     *config.Config
 	logger     *zap.SugaredLogger
@@ -23,6 +25,7 @@ type Handler struct {
 	deleteChan chan string
 }
 
+// NewHandler создает новую структуру Handler
 func NewHandler(config *config.Config, storage repository.Storage, logger *zap.SugaredLogger, deleteChan chan string) *Handler {
 	handler := &Handler{
 		storage:    storage,
@@ -33,6 +36,7 @@ func NewHandler(config *config.Config, storage repository.Storage, logger *zap.S
 	return handler
 }
 
+// DeleteUserURLs обрабатывает DELETE-запросы для удаления URL.
 func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	var arrShortURLs []string
 	if err := json.NewDecoder(r.Body).Decode(&arrShortURLs); err != nil {
@@ -49,6 +53,7 @@ func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(202)
 }
 
+// GetUserURLs обрабатывает GET-запросы для возврата списка URL, только для авторизованного пользователя.
 func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("token")
 	if err != nil {
@@ -97,6 +102,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// CheckConnecToDB проверяет соединение с базой данных
 func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
 	if err := h.storage.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -104,6 +110,7 @@ func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// PostHandler обрабатывает POST-запросы для создания короткого URL.
 func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	originalURL, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -134,7 +141,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL := config.Generate(string(originalURL))
+	shortURL := util.Generate(string(originalURL))
 	if shortKey, err := h.storage.Set(r.Context(), shortURL, string(originalURL), userID); err != nil {
 		if errors.Is(err, os.ErrExist) {
 			w.Header().Set("Content-Type", "text/plain")
@@ -151,6 +158,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(h.config.Host + "/" + shortURL))
 }
 
+// PostBatchHandler обрабатывает POST-запросы с телом в формате JSON для создания списка коротких URL.
 func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	var batch []model.ShotenBatchRequest
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
@@ -198,6 +206,7 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// JSONPostHandler обрабатывает POST-запросы с телом в формате JSON для создания короткого URL.
 func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	JSONRequest := model.JSONRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&JSONRequest); err != nil {
@@ -230,7 +239,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL := config.Generate(JSONRequest.URL)
+	shortURL := util.Generate(JSONRequest.URL)
 	if shortKey, err := h.storage.Set(r.Context(), shortURL, JSONRequest.URL, userID); err != nil {
 		if errors.Is(err, os.ErrExist) {
 			w.Header().Set("Content-Type", "application/json")
@@ -256,6 +265,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetHandler обрабатывает GET-запросы для возврата URL для авторизованного пользователя.
 func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "id")
 	if resURL, exist := h.storage.Get(r.Context(), shortURL); exist {

@@ -21,12 +21,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// DBPostgreSQL структура.
 type DBPostgreSQL struct {
 	config *config.Config
 	db     *sql.DB
 	logger *zap.SugaredLogger
 }
 
+// NewDBPostgreSQL создает новый DBPostgreSQL.
 func NewDBPostgreSQL(config *config.Config, logger *zap.SugaredLogger) *DBPostgreSQL {
 	db, err := sql.Open("pgx", config.DBDSN)
 	if err != nil {
@@ -40,6 +42,7 @@ func NewDBPostgreSQL(config *config.Config, logger *zap.SugaredLogger) *DBPostgr
 	}
 }
 
+// Set добавляет новую URL в базу данных.
 func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -69,6 +72,7 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 	return "", nil
 }
 
+// Set добавляет список URL в базу данных.
 func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	var response []model.ShortenResponseItem
 	stmt, err := s.db.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
@@ -99,6 +103,7 @@ func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatc
 	return response, nil
 }
 
+// Get извлекает URL из базы данных.
 func (s *DBPostgreSQL) Get(ctx context.Context, shortURL string) (string, bool) {
 	var (
 		deletedFlag bool
@@ -118,6 +123,7 @@ func (s *DBPostgreSQL) Get(ctx context.Context, shortURL string) (string, bool) 
 	return originalURL, true
 }
 
+// Get извлекает URL из базы данных по определенному ID.
 func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) ([]model.ShortenURLs, error) {
 	var URLs []model.ShortenURLs
 
@@ -147,12 +153,14 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) ([]model.Sho
 	return URLs, nil
 }
 
+// DeletedFlag удалеяет указанный URL в базе данных.
 func (s *DBPostgreSQL) DeletedFlag(ctx context.Context, shortURL string) error {
 	query := `UPDATE urls SET is_deleted = true WHERE short_url = $1`
 	_, err := s.db.ExecContext(ctx, query, shortURL)
 	return err
 }
 
+// Ping проверяет соединение с базой данных.
 func (s *DBPostgreSQL) Ping() error {
 	if err := s.db.Ping(); err != nil {
 		return err
@@ -160,6 +168,7 @@ func (s *DBPostgreSQL) Ping() error {
 	return nil
 }
 
+// InitMigrations инициализирует миграции.
 func InitMigrations(config *config.Config, logger *zap.SugaredLogger) error {
 	logger.Infow("Starting migrations")
 	db, err := sql.Open("pgx", config.DBDSN)

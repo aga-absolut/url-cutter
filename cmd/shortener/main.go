@@ -44,6 +44,7 @@ func main() {
 			logger.Errorw("Server error", "Error", err)
 		}
 	}()
+	time.Sleep(5 * time.Second)
 
 	<-ctx.Done()
 	logger.Info("Shutdown signal received")
