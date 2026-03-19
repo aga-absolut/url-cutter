@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// NewStorage возвращает хранилище на основе флагов и переменных среды. 
+// NewStorage возвращает хранилище на основе флагов и переменных среды.
 // Приоритет: PostgreSQL > File > Memory (по умолчанию).
 func NewStorage(config *config.Config, logger *zap.SugaredLogger) repository.Storage {
 	if config.DBDSN != "" {

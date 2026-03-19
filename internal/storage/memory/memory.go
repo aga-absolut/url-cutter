@@ -17,7 +17,7 @@ func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{data: make(map[string]string)}
 }
 
-// Set добавляет новую URL в память. 
+// Set добавляет новую URL в память.
 func (s *MemoryStorage) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
 	for k, v := range s.data {
 		if v == originalURL {
@@ -28,7 +28,7 @@ func (s *MemoryStorage) Set(ctx context.Context, shortURL, originalURL string, u
 	return shortURL, nil
 }
 
-// Get извлекает URL из памяти. 
+// Get извлекает URL из памяти.
 func (s *MemoryStorage) Get(ctx context.Context, shortURL string) (string, bool) {
 	str, exist := s.data[shortURL]
 	return str, exist
