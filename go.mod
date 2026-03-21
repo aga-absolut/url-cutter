@@ -1,7 +1,6 @@
 module github.com/aga-absolut/url-cutter
 
-go 1.25.0
-
+go 1.25.1
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/go-chi/chi/v5 v5.2.3

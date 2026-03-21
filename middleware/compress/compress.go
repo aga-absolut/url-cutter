@@ -7,15 +7,18 @@ import (
 	"strings"
 )
 
+// gzipWriter структура.
 type gzipWriter struct {
 	http.ResponseWriter
 	zipWriter io.Writer
 }
 
+// Write изменяет метод структуры ResponseWriter.
 func (c gzipWriter) Write(p []byte) (int, error) {
 	return c.zipWriter.Write(p)
 }
 
+// Compress сжимает данные.
 func Compress(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
@@ -31,6 +34,7 @@ func Compress(h http.Handler) http.Handler {
 	})
 }
 
+// Decompress распаковывает данные.
 func Decompress(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {

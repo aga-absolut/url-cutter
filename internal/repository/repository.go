@@ -6,6 +6,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/model"
 )
 
+// Storage интерфейс для взаимодействия с базой данных.
 type Storage interface {
 	Get(ctx context.Context, shortURL string) (string, bool)
 	Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error)
@@ -14,4 +15,3 @@ type Storage interface {
 	DeletedFlag(ctx context.Context, shortURL string) error
 	Ping() error
 }
-

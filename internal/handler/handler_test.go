@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	_ "net/http/pprof"
+
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/storage"

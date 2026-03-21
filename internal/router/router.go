@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// NewRouter создает новый маршрутизатор.
 func NewRouter(handler *handler.Handler) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(logger.WithFieldsInfo)
