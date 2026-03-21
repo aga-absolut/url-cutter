@@ -38,7 +38,7 @@ func main() {
 		Addr:    cfg.ServerAddress,
 		Handler: router,
 	}
-	
+
 	go func() {
 		logger.Infow("Starting server", "addr", cfg.ServerAddress)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
