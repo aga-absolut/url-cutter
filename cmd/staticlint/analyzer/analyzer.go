@@ -9,8 +9,8 @@ import (
 // Analyzer — анализатор, запрещающий os.Exit в func main() пакета main.
 var Analyzer = &analysis.Analyzer{
 	Name: "noexit",
-	Doc: `Запрещает прямой вызов os.Exit в функции main`,
-	Run: run,
+	Doc:  `Запрещает прямой вызов os.Exit в функции main`,
+	Run:  run,
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
