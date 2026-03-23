@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,7 +18,16 @@ import (
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
+	fmt.Println("Build version:", buildVersion)
+	fmt.Println("Build date:", buildDate)
+	fmt.Println("Build commit:", buildCommit)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 

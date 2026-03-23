@@ -1,4 +1,4 @@
-package analyzer
+package noexit
 
 import (
 	"go/ast"

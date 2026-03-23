@@ -25,6 +25,6 @@ func main() {
 		}
 	}
 
-	analyzers = append(analyzers, analyzer.Analyzer)
+	analyzers = append(analyzers, noexit.Analyzer)
 	multichecker.Main(analyzers...)
 }
