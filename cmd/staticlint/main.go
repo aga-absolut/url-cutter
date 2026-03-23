@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/aga-absolut/url-cutter/cmd/staticlint/analyzer"
+	"github.com/aga-absolut/url-cutter/cmd/staticlint/noexit"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/printf"
