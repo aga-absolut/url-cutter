@@ -22,6 +22,7 @@ type Config struct {
 	Host          string `env:"BASE_URL"`
 	FilePath      string `env:"FILE_STORAGE_PATH"`
 	DBDSN         string `env:"DATABASE_DSN"`
+	EnableHTTPS   bool   `env:"ENABLE_HTTPS"`
 }
 
 // NewConfig создает новый Config со значениями из флагов или переменных окружения
@@ -31,6 +32,7 @@ func NewConfig() *Config {
 	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")
 	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")             // storage.txt
 	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database") // postgres://postgres:absolute_1@localhost:5432/mydb
+	flag.BoolVar(&cfg.EnableHTTPS, "s", false, "https")
 	flag.Parse()
 
 	if err := env.Parse(cfg); err != nil {
