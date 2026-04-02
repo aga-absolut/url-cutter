@@ -32,11 +32,11 @@ type Config struct {
 func NewConfig() *Config {
 	cfg := &Config{}
 
-	flag.StringVar(&cfg.ConfigFile, "c", "", "config file name")           // config.txt
-	flag.StringVar(&cfg.ServerAddress, "a", "", "server host:port")        // localhost:8080
-	flag.StringVar(&cfg.Host, "b", "", "base URL")                         // http://localhost:8080
-	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")             // storage.txt
-	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database") // postgres://postgres:absolute_1@localhost:5432/mydb
+	flag.StringVar(&cfg.ConfigFile, "c", "", "config file name")                  // config.txt
+	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "server host:port") // localhost:8080
+	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")           // http://localhost:8080
+	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")                    // storage.txt
+	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database")        // postgres://postgres:absolute_1@localhost:5432/mydb
 	flag.BoolVar(&cfg.EnableHTTPS, "s", false, "https")
 	flag.Parse()
 
