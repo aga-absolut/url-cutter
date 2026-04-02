@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// Функция создания сертификата
 func GenerateCertificate(certFile, keyFile string) error {
 	// создаём шаблон сертификата
 	cert := &x509.Certificate{

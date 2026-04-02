@@ -24,3 +24,4 @@ vendor/
 #data
 counter.txt
 storage.txt
+config.txt
