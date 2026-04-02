@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"flag"
-	"io"
 	"os"
 	"time"
 
@@ -56,20 +55,14 @@ func NewConfig() *Config {
 
 // ParseConfigFromFile парсит данные для конфига из файла
 func ParseConfigFromFile(name string, cfg *Config) error {
-	configFile := &Config{}
-
 	file, err := os.Open(name)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	data, err := io.ReadAll(file)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(data, &configFile); err != nil {
+	var configFile Config
+	if err := json.NewDecoder(file).Decode(&configFile); err != nil {
 		return err
 	}
 
