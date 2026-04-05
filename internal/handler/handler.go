@@ -3,9 +3,12 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
@@ -274,4 +277,58 @@ func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusGone)
 	}
+}
+
+// GetStatsHandler обрабатывает GET-запросы для возврата количества URL и Users только доверенным сетям.
+func (h *Handler) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
+	if h.config.TrustedSubnet == "" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	_, ipNet, err := net.ParseCIDR(h.config.TrustedSubnet)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	ip, err := resolveIP(r)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	if !ipNet.Contains(ip) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	urls, err := h.storage.GetURLsCount(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	users := jwt.UserID
+
+	response := model.ResponseStats{URLs: urls, Users: users}
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+// resolveIP парсит сетевые заголовки и возвращает.
+func resolveIP(r *http.Request) (net.IP, error) {
+	ipStr := r.Header.Get("X-Real-IP")
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		ips := r.Header.Get("X-Forwarded-For")
+		ipStrs := strings.Split(ips, ",")
+		ipStr = ipStrs[0]
+		ip = net.ParseIP(ipStr)
+	}
+	if ip == nil {
+		return nil, fmt.Errorf("failed parse ip from http header")
+	}
+	return ip, nil
 }

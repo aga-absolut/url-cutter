@@ -13,5 +13,6 @@ type Storage interface {
 	SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error)
 	GetByUserID(ctx context.Context, userID int) ([]model.ShortenURLs, error)
 	DeletedFlag(ctx context.Context, shortURL string) error
+	GetURLsCount(ctx context.Context) (int, error)
 	Ping() error
 }

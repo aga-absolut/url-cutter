@@ -1,6 +1,11 @@
 package model
 
 type (
+	// ResponseStats структура необходимая для кодирования JSON для данный о количестве urlов и userов.
+	ResponseStats struct {
+		URLs  int `json:"urls"`
+		Users int `json:"users"`
+	}
 	// JSONRequest структура необходимая для декодирования JSON.
 	JSONRequest struct {
 		URL string `json:"url"`

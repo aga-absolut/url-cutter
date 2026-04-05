@@ -25,6 +25,7 @@ type Config struct {
 	FilePath      string `json:"file_storage_path" env:"FILE_STORAGE_PATH"`
 	DBDSN         string `json:"database_dsn" env:"DATABASE_DSN"`
 	ConfigFile    string `json:"-" env:"CONFIG"`
+	TrustedSubnet string `json:"trusted_subnet" env:"TRUSTED_SUBNET"`
 	EnableHTTPS   bool   `json:"enable_https" env:"ENABLE_HTTPS"`
 }
 
@@ -37,6 +38,7 @@ func NewConfig() *Config {
 	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")           // http://localhost:8080
 	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")                    // storage.txt
 	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database")        // postgres://postgres:absolute_1@localhost:5432/mydb
+	flag.StringVar(&cfg.TrustedSubnet, "t", "", "check subnet")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", false, "https")
 	flag.Parse()
 
