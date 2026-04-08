@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -292,8 +291,17 @@ func (h *Handler) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip, err := resolveIP(r)
-	if err != nil {
+	ipStr := r.Header.Get("X-Real-IP")
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		forwarded := r.Header.Get("X-Forwarded-For")
+		ipStrs := strings.Split(forwarded, ",")
+		if len(ipStrs) > 0 {
+			ip = net.ParseIP(ipStrs[0])
+		}
+	}
+
+	if ip == nil {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
@@ -315,20 +323,4 @@ func (h *Handler) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-}
-
-// resolveIP парсит сетевые заголовки и возвращает.
-func resolveIP(r *http.Request) (net.IP, error) {
-	ipStr := r.Header.Get("X-Real-IP")
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		ips := r.Header.Get("X-Forwarded-For")
-		ipStrs := strings.Split(ips, ",")
-		ipStr = ipStrs[0]
-		ip = net.ParseIP(ipStr)
-	}
-	if ip == nil {
-		return nil, fmt.Errorf("failed parse ip from http header")
-	}
-	return ip, nil
 }
