@@ -34,6 +34,11 @@ func (s *MemoryStorage) Get(ctx context.Context, shortURL string) (string, bool)
 	return str, exist
 }
 
+// GetURLsCount возвращает количество URL в памяти.
+func (s *MemoryStorage) GetURLsCount(ctx context.Context) (int, error) {
+	return len(s.data), nil
+}
+
 // SetBatchURL заглушка для postgreSQL.
 func (s *MemoryStorage) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	return nil, nil

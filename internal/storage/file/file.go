@@ -130,6 +130,34 @@ func (f *File) checkFile(originalURL string) (string, error) {
 	return "", nil
 }
 
+// GetURLsCount возвращает количество URL в файле.
+func (f *File) GetURLsCount(ctx context.Context) (int, error) {
+	var countURLs int
+
+	file, err := os.Open(f.config.FilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line != "" {
+			countURLs++
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+
+	return countURLs, nil
+}
+
 // SetBatchURL заглушка для postgreSQL.
 func (f *File) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	return nil, nil

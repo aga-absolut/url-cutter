@@ -153,6 +153,18 @@ func (s *DBPostgreSQL) GetByUserID(ctx context.Context, userID int) ([]model.Sho
 	return URLs, nil
 }
 
+// GetURLsCount возвращает количество URL в базе.
+func (s *DBPostgreSQL) GetURLsCount(ctx context.Context) (int, error) {
+	var countURLs int
+
+	row := s.db.QueryRowContext(ctx, `Select Count(1) From Urls`)
+	if err := row.Scan(&countURLs); err != nil {
+		return 0, err
+	}
+
+	return countURLs, nil
+}
+
 // DeletedFlag удалеяет указанный URL в базе данных.
 func (s *DBPostgreSQL) DeletedFlag(ctx context.Context, shortURL string) error {
 	query := `UPDATE urls SET is_deleted = true WHERE short_url = $1`

@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/aga-absolut/url-cutter/internal/cert"
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/handler"
 	"github.com/aga-absolut/url-cutter/internal/router"
@@ -17,7 +19,17 @@ import (
 	"github.com/aga-absolut/url-cutter/middleware/logger"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
+	fmt.Println("Build version:", buildVersion)
+	fmt.Println("Build date:", buildDate)
+	fmt.Println("Build commit:", buildCommit)
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -41,16 +53,29 @@ func main() {
 
 	go func() {
 		logger.Infow("Starting server", "addr", cfg.ServerAddress)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Errorw("Server error", "Error", err)
+
+		if cfg.EnableHTTPS {
+			certFile := "server.crt"
+			keyFile := "server.key"
+
+			if err := cert.GenerateCertificate(certFile, keyFile); err != nil {
+				logger.Fatalw("failed generate certificate", "error", err)
+			}
+
+			if err := server.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+				logger.Fatalw("create HTTPS server error", "error", err)
+			}
+		} else {
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logger.Fatalw("create HTTP server error", "error", err)
+			}
 		}
 	}()
-	time.Sleep(5 * time.Second)
 
 	<-ctx.Done()
 	logger.Info("Shutdown signal received")
 
-	ShutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ShutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ShutdownCtx); err != nil {

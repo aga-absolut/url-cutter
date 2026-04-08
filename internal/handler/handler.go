@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
@@ -273,5 +275,52 @@ func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
 		w.WriteHeader(http.StatusGone)
+	}
+}
+
+// GetStatsHandler обрабатывает GET-запросы для возврата количества URL и Users только доверенным сетям.
+func (h *Handler) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
+	if h.config.TrustedSubnet == "" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	_, ipNet, err := net.ParseCIDR(h.config.TrustedSubnet)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	ipStr := r.Header.Get("X-Real-IP")
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		forwarded := r.Header.Get("X-Forwarded-For")
+		ipStrs := strings.Split(forwarded, ",")
+		if len(ipStrs) > 0 {
+			ip = net.ParseIP(ipStrs[0])
+		}
+	}
+
+	if ip == nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	if !ipNet.Contains(ip) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	urls, err := h.storage.GetURLsCount(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	users := jwt.UserID
+
+	response := model.ResponseStats{URLs: urls, Users: users}
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 )
 
-var userID int
+var UserID int
 
 // Claims структура.
 type Claims struct {
@@ -20,12 +20,12 @@ type Claims struct {
 
 // BuildJWTString генерирует JWT токен.
 func BuildJWTString() (string, error) {
-	userID++
+	UserID++
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(config.TokenExpTime)),
 		},
-		UserID: userID,
+		UserID: UserID,
 	})
 
 	tokenString, err := token.SignedString(config.SecretKey)
