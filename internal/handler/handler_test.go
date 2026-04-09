@@ -12,6 +12,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
+	"github.com/aga-absolut/url-cutter/internal/service"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
 	"github.com/aga-absolut/url-cutter/middleware/jwt"
@@ -53,9 +54,10 @@ func TestHandle(t *testing.T) {
 	deleteCh := make(chan string)
 	log := logger.NewLogger()
 	storage := storage.NewStorage(cfg, log)
+	service := service.NewService(cfg, storage, deleteCh)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(cfg, storage, log, deleteCh)
+			hand := NewHandler(service, log)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -127,9 +129,10 @@ func TestPostReqJSON(t *testing.T) {
 	log := logger.NewLogger()
 	deleteCh := make(chan string)
 	storage := storage.NewStorage(cfg, log)
+	service := service.NewService(cfg, storage, deleteCh)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(cfg, storage, log, deleteCh)
+			handler := NewHandler(service, log)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)
@@ -166,10 +169,9 @@ func Benchmark(b *testing.B) {
 	memory := memory.NewMemoryStorage()
 	memory.Set(context.Background(), shortURL, "https://yandex.ru", 0)
 
-	handler := Handler{
-		config:  cfg,
-		storage: memory,
-	}
+	service := service.Service{Config: cfg, Storage: memory}
+	handler := Handler{service: &service}
+	
 	request := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(shortURL))
 	request.Header.Set("Content-Type", "application/json")
 	recoder := httptest.NewRecorder()

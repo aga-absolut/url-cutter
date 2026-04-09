@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/errs"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/util"
 	"github.com/jackc/pgerrcode"
@@ -62,7 +62,7 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 			if err := row.Scan(&shortKey); err != nil {
 				return "", fmt.Errorf("error scaning query row: %w", err)
 			}
-			return shortKey, os.ErrExist
+			return shortKey, errs.ErrURLAlreadyExists
 		}
 		return "", err
 	}

@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/errs"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"go.uber.org/zap"
 )
@@ -30,7 +31,7 @@ func NewFile(config *config.Config, logger *zap.SugaredLogger) *File {
 func (f *File) Set(ctx context.Context, shortURL, originalURL string, userID int) (string, error) {
 	if shortKey, err := f.checkFile(originalURL); err != nil {
 		if errors.Is(err, nil) {
-			return shortKey, os.ErrExist
+			return shortKey, errs.ErrURLAlreadyExists
 		}
 		return "", err
 	}

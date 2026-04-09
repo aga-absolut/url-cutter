@@ -4,15 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"net"
 	"net/http"
-	"os"
-	"strings"
 
-	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/errs"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/repository"
-	"github.com/aga-absolut/url-cutter/internal/util"
+	"github.com/aga-absolut/url-cutter/internal/service"
 	"github.com/aga-absolut/url-cutter/middleware/jwt"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -21,38 +17,17 @@ import (
 
 // Структура обработчика
 type Handler struct {
-	config     *config.Config
-	logger     *zap.SugaredLogger
-	storage    repository.Storage
-	deleteChan chan string
+	service *service.Service
+	logger *zap.SugaredLogger
 }
 
 // NewHandler создает новую структуру Handler
-func NewHandler(config *config.Config, storage repository.Storage, logger *zap.SugaredLogger, deleteChan chan string) *Handler {
+func NewHandler(service *service.Service, logger *zap.SugaredLogger) *Handler {
 	handler := &Handler{
-		storage:    storage,
-		config:     config,
-		deleteChan: deleteChan,
-		logger:     logger,
+		service: service,
+		logger:  logger,
 	}
 	return handler
-}
-
-// DeleteUserURLs обрабатывает DELETE-запросы для удаления URL.
-func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
-	var arrShortURLs []string
-	if err := json.NewDecoder(r.Body).Decode(&arrShortURLs); err != nil {
-		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	for _, shortURL := range arrShortURLs {
-		h.deleteChan <- shortURL
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(202)
 }
 
 // GetUserURLs обрабатывает GET-запросы для возврата списка URL, только для авторизованного пользователя.
@@ -82,23 +57,27 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := jwt.GetUserID(cookie.Value)
+	urls, err := h.service.GetUserURLs(r.Context(), cookie.Value)
 	if err != nil {
-		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
-		h.logger.Errorw("Failed to get userID", "error", err)
-		return
-	}
+		switch {
+		case errors.Is(err, errs.ErrInGettingUserID):
+			h.logger.Errorw("Failed to get userID", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 
-	URLs, err := h.storage.GetByUserID(r.Context(), userID)
-	if err != nil {
-		h.logger.Errorw("Failed to get user URLs", "error", err, "userID", userID)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		case errors.Is(err, errs.ErrInGettingURLs):
+			h.logger.Errorw("Failed to get user URLs", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		default:
+			h.logger.Errorw("failed to get user URLs", "error", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(URLs); err != nil {
+	if err := json.NewEncoder(w).Encode(urls); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -106,7 +85,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 
 // CheckConnecToDB проверяет соединение с базой данных
 func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
-	if err := h.storage.Ping(); err != nil {
+	if err := h.service.Ping(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
@@ -118,10 +97,6 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	if len(originalURL) == 0 {
-		http.Error(w, "error empty body", http.StatusBadRequest)
 	}
 
 	cookie, err := r.Cookie("token")
@@ -136,28 +111,30 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := jwt.GetUserID(cookie.Value)
+	shortURL, err := h.service.SetURL(r.Context(), originalURL, cookie.Value)
 	if err != nil {
-		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
-		h.logger.Errorw("Failed to get userID", "error", err)
-		return
-	}
+		switch {
+		case errors.Is(err, errs.ErrEmptyBody):
+			http.Error(w, "error empty body", http.StatusBadRequest)
 
-	shortURL := util.Generate(string(originalURL))
-	if shortKey, err := h.storage.Set(r.Context(), shortURL, string(originalURL), userID); err != nil {
-		if errors.Is(err, os.ErrExist) {
+		case errors.Is(err, errs.ErrInGettingUserID):
+			http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+			h.logger.Errorw("Failed to get userID", "error", err)
+
+		case errors.Is(err, errs.ErrURLAlreadyExists):
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusConflict)
-			w.Write([]byte(h.config.Host + "/" + shortKey))
-			return
+			w.Write([]byte(shortURL))
+
+		default:
+			w.WriteHeader(http.StatusBadRequest)
 		}
-		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(h.config.Host + "/" + shortURL))
+	w.Write([]byte(shortURL))
 }
 
 // PostBatchHandler обрабатывает POST-запросы с телом в формате JSON для создания списка коротких URL.
@@ -181,23 +158,20 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := jwt.GetUserID(cookie.Value)
+	response, err := h.service.SetBathcURLs(r.Context(), batch, cookie.Value)
 	if err != nil {
-		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
-		h.logger.Errorw("Failed to get userID", "error", err)
-		return
-	}
+		switch {
+		case errors.Is(err, errs.ErrEmptyBatch):
+			http.Error(w, "error batch is empty", http.StatusBadRequest)
 
-	if len(batch) == 0 {
-		http.Error(w, "error batch is empty", http.StatusBadRequest)
-		return
-	}
+		case errors.Is(err, errs.ErrInGettingUserID):
+			http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+			h.logger.Errorw("Failed to get userID", "error", err)
 
-	response, err := h.storage.SetBatchURL(r.Context(), batch, userID)
-	if err != nil {
-		h.logger.Errorw("error set batch url", "error", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		default:
+			h.logger.Errorw("error set batch url", "error", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -217,11 +191,6 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if len(JSONRequest.URL) == 0 {
-		http.Error(w, "error batch is empty", http.StatusBadRequest)
-		return
-	}
-
 	cookie, err := r.Cookie("token")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -234,34 +203,35 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := jwt.GetUserID(cookie.Value)
+	response, err := h.service.SetURLFromJSON(r.Context(), JSONRequest, cookie.Value)
 	if err != nil {
-		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
-		h.logger.Errorw("Failed to get userID", "error", err)
-		return
-	}
+		switch {
+		case errors.Is(err, errs.ErrEmptyBody):
+			http.Error(w, "error body is empty", http.StatusBadRequest)
 
-	shortURL := util.Generate(JSONRequest.URL)
-	if shortKey, err := h.storage.Set(r.Context(), shortURL, JSONRequest.URL, userID); err != nil {
-		if errors.Is(err, os.ErrExist) {
+		case errors.Is(err, errs.ErrInGettingUserID):
+			http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+			h.logger.Errorw("Failed to get userID", "error", err)
+
+		case errors.Is(err, errs.ErrURLAlreadyExists):
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
-			JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortKey}
-			if err := json.NewEncoder(w).Encode(JSONResponse); err != nil {
+			if err := json.NewEncoder(w).Encode(response); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			return
+
+		default:
+			h.logger.Errorw("error set batch url", "error", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
-		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	JSONResponse := model.JSONResponse{Result: h.config.Host + "/" + shortURL}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(JSONResponse); err != nil {
+	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -270,7 +240,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 // GetHandler обрабатывает GET-запросы для возврата URL для авторизованного пользователя.
 func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	shortURL := chi.URLParam(r, "id")
-	if resURL, exist := h.storage.Get(r.Context(), shortURL); exist {
+	if resURL, exist := h.service.GetURL(r.Context(), shortURL); exist {
 		w.Header().Set("Location", resURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
 	} else {
@@ -278,47 +248,42 @@ func (h *Handler) GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteUserURLs обрабатывает DELETE-запросы для удаления URL.
+func (h *Handler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
+	var arrShortURLs []string
+	if err := json.NewDecoder(r.Body).Decode(&arrShortURLs); err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	h.service.DeleteURLs(arrShortURLs)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+}
+
 // GetStatsHandler обрабатывает GET-запросы для возврата количества URL и Users только доверенным сетям.
 func (h *Handler) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
-	if h.config.TrustedSubnet == "" {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
-	_, ipNet, err := net.ParseCIDR(h.config.TrustedSubnet)
-	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
 	ipStr := r.Header.Get("X-Real-IP")
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		forwarded := r.Header.Get("X-Forwarded-For")
-		ipStrs := strings.Split(forwarded, ",")
-		if len(ipStrs) > 0 {
-			ip = net.ParseIP(ipStrs[0])
-		}
-	}
+	forwarded := r.Header.Get("X-Forwarded-For")
 
-	if ip == nil {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
-	if !ipNet.Contains(ip) {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
-	urls, err := h.storage.GetURLsCount(r.Context())
+	response, err := h.service.GetStats(r.Context(), ipStr, forwarded)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, errs.ErrTrustedSubnetIsEmpty):
+			http.Error(w, err.Error(), http.StatusForbidden)
+
+		case errors.Is(err, errs.ErrInGettingUrlsCount):
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		default:
+			http.Error(w, err.Error(), http.StatusForbidden)
+		}
 		return
 	}
-	users := jwt.UserID
 
-	response := model.ResponseStats{URLs: urls, Users: users}
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

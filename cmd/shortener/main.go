@@ -13,6 +13,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/handler"
 	"github.com/aga-absolut/url-cutter/internal/router"
+	"github.com/aga-absolut/url-cutter/internal/service"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
 	"github.com/aga-absolut/url-cutter/internal/workers"
@@ -43,7 +44,8 @@ func main() {
 	}
 	storage := storage.NewStorage(cfg, logger)
 	worker := workers.NewWorkerPool(ctx, deleteChan, storage, config.SizeWorkers, logger)
-	handler := handler.NewHandler(cfg, storage, logger, deleteChan)
+	service := service.NewService(cfg, storage, deleteChan)
+	handler := handler.NewHandler(service, logger)
 	router := router.NewRouter(handler)
 
 	server := &http.Server{
