@@ -31,6 +31,24 @@ func NewService(config *config.Config, storage repository.Storage, deleteChan ch
 	return service
 }
 
+func (s *Service) Ping() error {
+	if err := s.Storage.Ping(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) GetURL(ctx context.Context, shortURL string) (string, bool) {
+	resURL, exist := s.Storage.Get(ctx, shortURL)
+	return resURL, exist
+}
+
+func (s *Service) DeleteURLs(arrShortURLs []string) {
+	for _, shortURL := range arrShortURLs {
+		s.deleteChan <- shortURL
+	}
+}
+
 func (s *Service) GetUserURLs(ctx context.Context, cookie string) ([]model.ShortenURLs, error) {
 	userID, err := jwt.GetUserID(cookie)
 	if err != nil {
@@ -43,13 +61,6 @@ func (s *Service) GetUserURLs(ctx context.Context, cookie string) ([]model.Short
 	}
 
 	return URLs, nil
-}
-
-func (s *Service) Ping() error {
-	if err := s.Storage.Ping(); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (s *Service) SetURL(ctx context.Context, originalURL []byte, cookie string) (string, error) {
@@ -110,17 +121,6 @@ func (s *Service) SetURLFromJSON(ctx context.Context, req model.JSONRequest, coo
 	}
 
 	return model.JSONResponse{Result: s.Config.Host + "/" + shortURL}, nil
-}
-
-func (s *Service) GetURL(ctx context.Context, shortURL string) (string, bool) {
-	resURL, exist := s.Storage.Get(ctx, shortURL)
-	return resURL, exist
-}
-
-func (s *Service) DeleteURLs(arrShortURLs []string) {
-	for _, shortURL := range arrShortURLs {
-		s.deleteChan <- shortURL
-	}
 }
 
 func (s *Service) GetStats(ctx context.Context, ipStr, forwarded string) (model.ResponseStats, error) {
