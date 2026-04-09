@@ -14,14 +14,12 @@ import (
 	"github.com/aga-absolut/url-cutter/middleware/jwt"
 )
 
-// Структура обработчика
 type Service struct {
 	Config     *config.Config
 	Storage    repository.Storage
 	deleteChan chan string
 }
 
-// NewHandler создает новую структуру Handler
 func NewService(config *config.Config, storage repository.Storage, deleteChan chan string) *Service {
 	service := &Service{
 		Config:     config,
