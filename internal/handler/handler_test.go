@@ -171,7 +171,7 @@ func Benchmark(b *testing.B) {
 
 	service := service.Service{Config: cfg, Storage: memory}
 	handler := Handler{service: &service}
-	
+
 	request := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(shortURL))
 	request.Header.Set("Content-Type", "application/json")
 	recoder := httptest.NewRecorder()

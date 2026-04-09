@@ -18,7 +18,7 @@ import (
 // Структура обработчика
 type Handler struct {
 	service *service.Service
-	logger *zap.SugaredLogger
+	logger  *zap.SugaredLogger
 }
 
 // NewHandler создает новую структуру Handler
