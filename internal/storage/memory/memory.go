@@ -40,7 +40,7 @@ func (s *MemoryStorage) GetURLsCount(ctx context.Context) (int, error) {
 }
 
 // SetBatchURL заглушка для postgreSQL.
-func (s *MemoryStorage) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
+func (s *MemoryStorage) SetBatchURL(ctx context.Context, batch []model.ShortenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	return nil, nil
 }
 

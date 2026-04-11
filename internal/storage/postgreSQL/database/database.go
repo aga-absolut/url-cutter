@@ -73,7 +73,7 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 }
 
 // Set добавляет список URL в базу данных.
-func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
+func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShortenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	var response []model.ShortenResponseItem
 	stmt, err := s.db.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
 	if err != nil {

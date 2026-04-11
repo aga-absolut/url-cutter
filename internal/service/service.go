@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"strings"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/errs"
@@ -47,12 +46,7 @@ func (s *Service) DeleteURLs(arrShortURLs []string) {
 	}
 }
 
-func (s *Service) GetUserURLs(ctx context.Context, cookie string) ([]model.ShortenURLs, error) {
-	userID, err := jwt.GetUserID(cookie)
-	if err != nil {
-		return nil, errs.ErrInGettingUserID
-	}
-
+func (s *Service) GetUserURLs(ctx context.Context, userID int) ([]model.ShortenURLs, error) {
 	URLs, err := s.Storage.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, errs.ErrInGettingURLs
@@ -61,14 +55,9 @@ func (s *Service) GetUserURLs(ctx context.Context, cookie string) ([]model.Short
 	return URLs, nil
 }
 
-func (s *Service) SetURL(ctx context.Context, originalURL []byte, cookie string) (string, error) {
+func (s *Service) SetURL(ctx context.Context, originalURL []byte, userID int) (string, error) {
 	if len(originalURL) == 0 {
 		return "", errs.ErrEmptyBody
-	}
-
-	userID, err := jwt.GetUserID(cookie)
-	if err != nil {
-		return "", errs.ErrInGettingUserID
 	}
 
 	shortURL := util.Generate(string(originalURL))
@@ -82,12 +71,7 @@ func (s *Service) SetURL(ctx context.Context, originalURL []byte, cookie string)
 	return s.Config.Host + "/" + shortURL, nil
 }
 
-func (s *Service) SetBathcURLs(ctx context.Context, batch []model.ShotenBatchRequest, cookie string) ([]model.ShortenResponseItem, error) {
-	userID, err := jwt.GetUserID(cookie)
-	if err != nil {
-		return nil, errs.ErrInGettingUserID
-	}
-
+func (s *Service) SetBatchURLs(ctx context.Context, batch []model.ShortenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	if len(batch) == 0 {
 		return nil, errs.ErrEmptyBatch
 	}
@@ -100,14 +84,9 @@ func (s *Service) SetBathcURLs(ctx context.Context, batch []model.ShotenBatchReq
 	return response, nil
 }
 
-func (s *Service) SetURLFromJSON(ctx context.Context, req model.JSONRequest, cookie string) (model.JSONResponse, error) {
+func (s *Service) SetURLFromJSON(ctx context.Context, req model.JSONRequest, userID int) (model.JSONResponse, error) {
 	if len(req.URL) == 0 {
 		return model.JSONResponse{}, errs.ErrEmptyBody
-	}
-
-	userID, err := jwt.GetUserID(cookie)
-	if err != nil {
-		return model.JSONResponse{}, errs.ErrInGettingUserID
 	}
 
 	shortURL := util.Generate(req.URL)
@@ -121,7 +100,7 @@ func (s *Service) SetURLFromJSON(ctx context.Context, req model.JSONRequest, coo
 	return model.JSONResponse{Result: s.Config.Host + "/" + shortURL}, nil
 }
 
-func (s *Service) GetStats(ctx context.Context, ipStr, forwarded string) (model.ResponseStats, error) {
+func (s *Service) GetStats(ctx context.Context, ip net.IP) (model.ResponseStats, error) {
 	if s.Config.TrustedSubnet == "" {
 		return model.ResponseStats{}, errs.ErrTrustedSubnetIsEmpty
 	}
@@ -129,14 +108,6 @@ func (s *Service) GetStats(ctx context.Context, ipStr, forwarded string) (model.
 	_, ipNet, err := net.ParseCIDR(s.Config.TrustedSubnet)
 	if err != nil {
 		return model.ResponseStats{}, err
-	}
-
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		ipStrs := strings.Split(forwarded, ",")
-		if len(ipStrs) > 0 {
-			ip = net.ParseIP(ipStrs[0])
-		}
 	}
 
 	if ip == nil {

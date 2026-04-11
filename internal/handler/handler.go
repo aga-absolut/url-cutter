@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/aga-absolut/url-cutter/internal/errs"
 	"github.com/aga-absolut/url-cutter/internal/model"
@@ -57,13 +59,16 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urls, err := h.service.GetUserURLs(r.Context(), cookie.Value)
+	userID, err := jwt.GetUserID(cookie.Value)
+	if err != nil {
+		h.logger.Errorw("Failed to get userID", "error", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	urls, err := h.service.GetUserURLs(r.Context(), userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, errs.ErrInGettingUserID):
-			h.logger.Errorw("Failed to get userID", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-
 		case errors.Is(err, errs.ErrInGettingURLs):
 			h.logger.Errorw("Failed to get user URLs", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -111,15 +116,18 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL, err := h.service.SetURL(r.Context(), originalURL, cookie.Value)
+	userID, err := jwt.GetUserID(cookie.Value)
+	if err != nil {
+		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+		h.logger.Errorw("Failed to get userID", "error", err)
+		return
+	}
+
+	shortURL, err := h.service.SetURL(r.Context(), originalURL, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrEmptyBody):
 			http.Error(w, "error empty body", http.StatusBadRequest)
-
-		case errors.Is(err, errs.ErrInGettingUserID):
-			http.Error(w, "Failed to get userID", http.StatusInternalServerError)
-			h.logger.Errorw("Failed to get userID", "error", err)
 
 		case errors.Is(err, errs.ErrURLAlreadyExists):
 			w.Header().Set("Content-Type", "text/plain")
@@ -139,7 +147,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 // PostBatchHandler обрабатывает POST-запросы с телом в формате JSON для создания списка коротких URL.
 func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
-	var batch []model.ShotenBatchRequest
+	var batch []model.ShortenBatchRequest
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -158,7 +166,14 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.service.SetBathcURLs(r.Context(), batch, cookie.Value)
+	userID, err := jwt.GetUserID(cookie.Value)
+	if err != nil {
+		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+		h.logger.Errorw("Failed to get userID", "error", err)
+		return
+	}
+
+	response, err := h.service.SetBatchURLs(r.Context(), batch, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrEmptyBatch):
@@ -203,15 +218,18 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.service.SetURLFromJSON(r.Context(), JSONRequest, cookie.Value)
+	userID, err := jwt.GetUserID(cookie.Value)
+	if err != nil {
+		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
+		h.logger.Errorw("Failed to get userID", "error", err)
+		return
+	}
+
+	response, err := h.service.SetURLFromJSON(r.Context(), JSONRequest, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrEmptyBody):
 			http.Error(w, "error body is empty", http.StatusBadRequest)
-
-		case errors.Is(err, errs.ErrInGettingUserID):
-			http.Error(w, "Failed to get userID", http.StatusInternalServerError)
-			h.logger.Errorw("Failed to get userID", "error", err)
 
 		case errors.Is(err, errs.ErrURLAlreadyExists):
 			w.Header().Set("Content-Type", "application/json")
@@ -268,7 +286,15 @@ func (h *Handler) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
 	ipStr := r.Header.Get("X-Real-IP")
 	forwarded := r.Header.Get("X-Forwarded-For")
 
-	response, err := h.service.GetStats(r.Context(), ipStr, forwarded)
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		ipStrs := strings.Split(forwarded, ",")
+		if len(ipStrs) > 0 {
+			ip = net.ParseIP(ipStrs[0])
+		}
+	}
+
+	response, err := h.service.GetStats(r.Context(), ip)
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrTrustedSubnetIsEmpty):

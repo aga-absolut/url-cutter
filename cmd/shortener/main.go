@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/cert"
 	"github.com/aga-absolut/url-cutter/internal/config"
+	grpc_server "github.com/aga-absolut/url-cutter/internal/grpc"
 	"github.com/aga-absolut/url-cutter/internal/handler"
 	"github.com/aga-absolut/url-cutter/internal/router"
 	"github.com/aga-absolut/url-cutter/internal/service"
@@ -18,6 +20,9 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
 	"github.com/aga-absolut/url-cutter/internal/workers"
 	"github.com/aga-absolut/url-cutter/middleware/logger"
+	pb "github.com/aga-absolut/url-cutter/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var (
@@ -48,13 +53,13 @@ func main() {
 	handler := handler.NewHandler(service, logger)
 	router := router.NewRouter(handler)
 
-	server := &http.Server{
+	HTTPserver := &http.Server{
 		Addr:    cfg.ServerAddress,
 		Handler: router,
 	}
 
 	go func() {
-		logger.Infow("Starting server", "addr", cfg.ServerAddress)
+		logger.Infow("Starting HTTP server", "addr", cfg.ServerAddress)
 
 		if cfg.EnableHTTPS {
 			certFile := "server.crt"
@@ -64,13 +69,33 @@ func main() {
 				logger.Fatalw("failed generate certificate", "error", err)
 			}
 
-			if err := server.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+			if err := HTTPserver.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
 				logger.Fatalw("create HTTPS server error", "error", err)
 			}
 		} else {
-			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err := HTTPserver.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				logger.Fatalw("create HTTP server error", "error", err)
 			}
+		}
+	}()
+
+	// grpcurl -plaintext -d '{\"original_url\": \"https://google.com\"}' localhost:3200 urlcutter.URLCutter.PostHandler
+	// grpcurl -plaintext -d '{\"short_url\": \"940689ec\"}' localhost:3200 urlcutter.URLCutter.GetHandler
+
+	gRPCserver := grpc.NewServer()
+	pb.RegisterURLCutterServer(gRPCserver, grpc_server.NewURLCutterServer(service))
+	reflection.Register(gRPCserver)
+
+	go func() {
+		logger.Infow("Starting gRPC server", "addr", ":3200")
+
+		listen, err := net.Listen("tcp", ":3200")
+		if err != nil {
+			logger.Fatalw("failed to listen on gRPC port :3200", "error", err)
+		}
+
+		if err := gRPCserver.Serve(listen); err != nil {
+			logger.Errorw("gRPC server stopped", "error", err)
 		}
 	}()
 
@@ -80,10 +105,11 @@ func main() {
 	ShutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	if err := server.Shutdown(ShutdownCtx); err != nil {
+	if err := HTTPserver.Shutdown(ShutdownCtx); err != nil {
 		logger.Errorw("Server shutdown error", "Error", err)
 	}
 
+	gRPCserver.GracefulStop()
 	worker.Stop()
 	logger.Info("Application stopped successfully")
 }

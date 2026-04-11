@@ -25,7 +25,7 @@ type (
 	}
 
 	// ShotenBatchRequest структура необходимая для декодирования JSON для списка URL.
-	ShotenBatchRequest struct {
+	ShortenBatchRequest struct {
 		CorrelationID string `json:"correlation_id"`
 		OriginalURL   string `json:"original_url"`
 	}

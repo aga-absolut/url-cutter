@@ -160,7 +160,7 @@ func (f *File) GetURLsCount(ctx context.Context) (int, error) {
 }
 
 // SetBatchURL заглушка для postgreSQL.
-func (f *File) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
+func (f *File) SetBatchURL(ctx context.Context, batch []model.ShortenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	return nil, nil
 }
 
