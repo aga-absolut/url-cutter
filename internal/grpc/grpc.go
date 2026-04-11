@@ -80,14 +80,14 @@ func (u *URLCutterServer) PostBatchHandler(ctx context.Context, in *pb.PostBatch
 	var response []*pb.BatchResponseItem
 
 	for _, i := range in.Items {
-		shortURl, err := u.service.SetURL(ctx, []byte(i.OriginalUrl), int(i.UserID))
+		shortURL, err := u.service.SetURL(ctx, []byte(i.OriginalUrl), int(i.UserID))
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "internal server error")
 		}
 
 		response = append(response, &pb.BatchResponseItem{
 			UserID:   i.UserID,
-			ShortUrl: shortURl,
+			ShortUrl: shortURL,
 		})
 	}
 
