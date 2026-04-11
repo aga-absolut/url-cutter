@@ -20,24 +20,26 @@ var SizeWorkers = 1
 
 // Config структура
 type Config struct {
-	ServerAddress string `json:"server_address" env:"SERVER_ADDRESS"`
-	Host          string `json:"base_url" env:"BASE_URL"`
-	FilePath      string `json:"file_storage_path" env:"FILE_STORAGE_PATH"`
-	DBDSN         string `json:"database_dsn" env:"DATABASE_DSN"`
-	ConfigFile    string `json:"-" env:"CONFIG"`
-	TrustedSubnet string `json:"trusted_subnet" env:"TRUSTED_SUBNET"`
-	EnableHTTPS   bool   `json:"enable_https" env:"ENABLE_HTTPS"`
+	HTTPServerAddress string `json:"server_address" env:"SERVER_ADDRESS"`
+	GRPCServerAddress string `json:"grpc_server_address" env:"GRPC_SERVER_ADDRESS"`
+	Host              string `json:"base_url" env:"BASE_URL"`
+	FilePath          string `json:"file_storage_path" env:"FILE_STORAGE_PATH"`
+	DBDSN             string `json:"database_dsn" env:"DATABASE_DSN"`
+	ConfigFile        string `json:"-" env:"CONFIG"`
+	TrustedSubnet     string `json:"trusted_subnet" env:"TRUSTED_SUBNET"`
+	EnableHTTPS       bool   `json:"enable_https" env:"ENABLE_HTTPS"`
 }
 
 // NewConfig создает новый Config со значениями из флагов или переменных окружения
 func NewConfig() *Config {
 	cfg := &Config{}
 
-	flag.StringVar(&cfg.ConfigFile, "c", "", "config file name")                  // config.txt
-	flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "server host:port") // localhost:8080
-	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")           // http://localhost:8080
-	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")                    // storage.txt
-	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database")        // postgres://postgres:absolute_1@localhost:5432/mydb
+	flag.StringVar(&cfg.ConfigFile, "c", "", "config file name")                           // config.txt
+	flag.StringVar(&cfg.HTTPServerAddress, "a", "localhost:8080", "http server host:port") // localhost:8080
+	flag.StringVar(&cfg.GRPCServerAddress, "g", ":3200", "grpc server host:port")          // localhost:3200
+	flag.StringVar(&cfg.Host, "b", "http://localhost:8080", "base URL")                    // http://localhost:8080
+	flag.StringVar(&cfg.FilePath, "f", "", "storage filename")                             // storage.txt
+	flag.StringVar(&cfg.DBDSN, "d", "", "name for check connect database")                 // postgres://postgres:absolute_1@localhost:5432/mydb
 	flag.StringVar(&cfg.TrustedSubnet, "t", "", "check subnet")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", false, "https")
 	flag.Parse()
@@ -68,8 +70,8 @@ func ParseConfigFromFile(name string, cfg *Config) error {
 		return err
 	}
 
-	if cfg.ServerAddress == "" {
-		cfg.ServerAddress = configFile.ServerAddress
+	if cfg.HTTPServerAddress == "" {
+		cfg.HTTPServerAddress = configFile.HTTPServerAddress
 	}
 	if cfg.Host == "" {
 		cfg.Host = configFile.Host

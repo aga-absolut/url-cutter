@@ -48,8 +48,8 @@ func TestHandle(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		ServerAddress: "http://localhost:8080/",
-		Host:          "http://localhost:8080",
+		HTTPServerAddress: "http://localhost:8080/",
+		Host:              "http://localhost:8080",
 	}
 	deleteCh := make(chan string)
 	log := logger.NewLogger()
@@ -65,7 +65,7 @@ func TestHandle(t *testing.T) {
 
 			//----------------------------------------Post request
 
-			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(tt.body))
 
 			token, _ := jwt.BuildJWTString()
 			req.AddCookie(&http.Cookie{
@@ -92,7 +92,7 @@ func TestHandle(t *testing.T) {
 
 			//----------------------------------------Get request
 
-			req = httptest.NewRequest(http.MethodGet, cfg.ServerAddress+shortURL, nil)
+			req = httptest.NewRequest(http.MethodGet, cfg.HTTPServerAddress+shortURL, nil)
 			w = httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
@@ -122,9 +122,9 @@ func TestPostReqJSON(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		ServerAddress: "http://localhost:8080/api/shorten",
-		Host:          "http://localhost:8080",
-		FilePath:      "storage.txt",
+		HTTPServerAddress: "http://localhost:8080/api/shorten",
+		Host:              "http://localhost:8080",
+		FilePath:          "storage.txt",
 	}
 	log := logger.NewLogger()
 	deleteCh := make(chan string)
@@ -137,7 +137,7 @@ func TestPostReqJSON(t *testing.T) {
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)
 
-			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(tt.body))
 
 			token, _ := jwt.BuildJWTString()
 			req.AddCookie(&http.Cookie{
@@ -165,14 +165,14 @@ func TestPostReqJSON(t *testing.T) {
 
 func Benchmark(b *testing.B) {
 	shortURL := "http://localhost:Afhbwof2"
-	cfg := &config.Config{ServerAddress: "http://localhost:8080/"}
+	cfg := &config.Config{HTTPServerAddress: "http://localhost:8080/"}
 	memory := memory.NewMemoryStorage()
 	memory.Set(context.Background(), shortURL, "https://yandex.ru", 0)
 
 	service := service.Service{Config: cfg, Storage: memory}
 	handler := Handler{service: &service}
 
-	request := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(shortURL))
+	request := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(shortURL))
 	request.Header.Set("Content-Type", "application/json")
 	recoder := httptest.NewRecorder()
 

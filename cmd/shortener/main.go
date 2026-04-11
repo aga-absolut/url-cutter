@@ -54,12 +54,12 @@ func main() {
 	router := router.NewRouter(handler)
 
 	HTTPserver := &http.Server{
-		Addr:    cfg.ServerAddress,
+		Addr:    cfg.HTTPServerAddress,
 		Handler: router,
 	}
 
 	go func() {
-		logger.Infow("Starting HTTP server", "addr", cfg.ServerAddress)
+		logger.Infow("Starting HTTP server", "addr", cfg.HTTPServerAddress)
 
 		if cfg.EnableHTTPS {
 			certFile := "server.crt"
@@ -87,9 +87,9 @@ func main() {
 	reflection.Register(gRPCserver)
 
 	go func() {
-		logger.Infow("Starting gRPC server", "addr", ":3200")
+		logger.Infow("Starting gRPC server", "addr", cfg.GRPCServerAddress)
 
-		listen, err := net.Listen("tcp", ":3200")
+		listen, err := net.Listen("tcp", cfg.GRPCServerAddress)
 		if err != nil {
 			logger.Fatalw("failed to listen on gRPC port :3200", "error", err)
 		}

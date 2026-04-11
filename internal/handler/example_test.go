@@ -16,12 +16,12 @@ import (
 
 func ExampleHandler_PostHandler() {
 	shortURL := "http://localhost:8080/Afhbwof2"
-	cfg := &config.Config{ServerAddress: "http://localhost:8080/"}
+	cfg := &config.Config{HTTPServerAddress: "http://localhost:8080/"}
 	memory := memory.NewMemoryStorage()
 	service := service.Service{Config: cfg, Storage: memory}
 	handler := Handler{service: &service}
 
-	request := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(shortURL))
+	request := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(shortURL))
 	request.Header.Set("Content-Type", "application/json")
 
 	token, _ := jwt.BuildJWTString()
@@ -50,14 +50,14 @@ func ExampleHandler_GetHandler() {
 	memory := memory.NewMemoryStorage()
 	memory.Set(context.Background(), "afhbw222", "https://absolute.ru", 0)
 
-	cfg := &config.Config{ServerAddress: "/afhbw222"}
+	cfg := &config.Config{HTTPServerAddress: "/afhbw222"}
 	service := service.Service{Config: cfg, Storage: memory}
 	handler := Handler{service: &service}
 
 	r := chi.NewRouter()
 	r.Get("/{id}", handler.GetHandler)
 
-	request := httptest.NewRequest(http.MethodGet, cfg.ServerAddress, nil)
+	request := httptest.NewRequest(http.MethodGet, cfg.HTTPServerAddress, nil)
 	recoder := httptest.NewRecorder()
 
 	r.ServeHTTP(recoder, request)
