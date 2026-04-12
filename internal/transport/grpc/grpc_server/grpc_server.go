@@ -51,7 +51,7 @@ func (u *URLCutterServer) GetUserURLs(ctx context.Context, in *pb.GetUserURLSReq
 	return &response, nil
 }
 
-func (u *URLCutterServer) GetStatsHandler(ctx context.Context, in *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
+func (u *URLCutterServer) GetStatsHandler(ctx context.Context, in *emptypb.Empty) (*pb.GetStatsResponse, error) {
 	var ip net.IP
 	if peerInfo, ok := peer.FromContext(ctx); ok {
 		if tcpAddr, ok := peerInfo.Addr.(*net.TCPAddr); ok {
@@ -80,14 +80,14 @@ func (u *URLCutterServer) PostBatchHandler(ctx context.Context, in *pb.PostBatch
 	var response []*pb.BatchResponseItem
 
 	for _, i := range in.Items {
-		shortURL, err := u.service.SetURL(ctx, []byte(i.OriginalUrl), int(i.UserID))
+		shortURL, err := u.service.SetURL(ctx, []byte(i.OriginalUrl), int(i.CorrelationId))
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "internal server error")
 		}
 
 		response = append(response, &pb.BatchResponseItem{
-			UserID:   i.UserID,
-			ShortUrl: shortURL,
+			CorrelationId: i.CorrelationId,
+			ShortUrl:      shortURL,
 		})
 	}
 

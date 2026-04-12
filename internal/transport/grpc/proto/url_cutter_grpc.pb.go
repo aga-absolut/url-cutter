@@ -36,7 +36,7 @@ const (
 type URLCutterClient interface {
 	GetHandler(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetUserURLs(ctx context.Context, in *GetUserURLSRequest, opts ...grpc.CallOption) (*GetUserURLSResponse, error)
-	GetStatsHandler(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error)
+	GetStatsHandler(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetStatsResponse, error)
 	PostHandler(ctx context.Context, in *PostRequest, opts ...grpc.CallOption) (*PostResponse, error)
 	PostBatchHandler(ctx context.Context, in *PostBatchRequest, opts ...grpc.CallOption) (*PostBatchResponse, error)
 	DeleteUserURLs(ctx context.Context, in *DeleteUserURLsRequest, opts ...grpc.CallOption) (*DeleteUserURLsResponse, error)
@@ -71,7 +71,7 @@ func (c *uRLCutterClient) GetUserURLs(ctx context.Context, in *GetUserURLSReques
 	return out, nil
 }
 
-func (c *uRLCutterClient) GetStatsHandler(ctx context.Context, in *GetStatsRequest, opts ...grpc.CallOption) (*GetStatsResponse, error) {
+func (c *uRLCutterClient) GetStatsHandler(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetStatsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetStatsResponse)
 	err := c.cc.Invoke(ctx, URLCutter_GetStatsHandler_FullMethodName, in, out, cOpts...)
@@ -127,7 +127,7 @@ func (c *uRLCutterClient) CheckConnecToDB(ctx context.Context, in *emptypb.Empty
 type URLCutterServer interface {
 	GetHandler(context.Context, *GetRequest) (*GetResponse, error)
 	GetUserURLs(context.Context, *GetUserURLSRequest) (*GetUserURLSResponse, error)
-	GetStatsHandler(context.Context, *GetStatsRequest) (*GetStatsResponse, error)
+	GetStatsHandler(context.Context, *emptypb.Empty) (*GetStatsResponse, error)
 	PostHandler(context.Context, *PostRequest) (*PostResponse, error)
 	PostBatchHandler(context.Context, *PostBatchRequest) (*PostBatchResponse, error)
 	DeleteUserURLs(context.Context, *DeleteUserURLsRequest) (*DeleteUserURLsResponse, error)
@@ -148,7 +148,7 @@ func (UnimplementedURLCutterServer) GetHandler(context.Context, *GetRequest) (*G
 func (UnimplementedURLCutterServer) GetUserURLs(context.Context, *GetUserURLSRequest) (*GetUserURLSResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUserURLs not implemented")
 }
-func (UnimplementedURLCutterServer) GetStatsHandler(context.Context, *GetStatsRequest) (*GetStatsResponse, error) {
+func (UnimplementedURLCutterServer) GetStatsHandler(context.Context, *emptypb.Empty) (*GetStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetStatsHandler not implemented")
 }
 func (UnimplementedURLCutterServer) PostHandler(context.Context, *PostRequest) (*PostResponse, error) {
@@ -221,7 +221,7 @@ func _URLCutter_GetUserURLs_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _URLCutter_GetStatsHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStatsRequest)
+	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -233,7 +233,7 @@ func _URLCutter_GetStatsHandler_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: URLCutter_GetStatsHandler_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLCutterServer).GetStatsHandler(ctx, req.(*GetStatsRequest))
+		return srv.(URLCutterServer).GetStatsHandler(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }

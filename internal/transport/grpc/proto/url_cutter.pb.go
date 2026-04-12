@@ -251,42 +251,6 @@ func (x *GetUserURLSResponse) GetOriginalUrls() []*ShortenURLs {
 	return nil
 }
 
-type GetStatsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetStatsRequest) Reset() {
-	*x = GetStatsRequest{}
-	mi := &file_proto_url_cutter_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetStatsRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetStatsRequest) ProtoMessage() {}
-
-func (x *GetStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetStatsRequest.ProtoReflect.Descriptor instead.
-func (*GetStatsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{5}
-}
-
 type GetStatsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TotalUsers    int64                  `protobuf:"varint,1,opt,name=total_users,json=totalUsers,proto3" json:"total_users,omitempty"`
@@ -297,7 +261,7 @@ type GetStatsResponse struct {
 
 func (x *GetStatsResponse) Reset() {
 	*x = GetStatsResponse{}
-	mi := &file_proto_url_cutter_proto_msgTypes[6]
+	mi := &file_proto_url_cutter_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -309,7 +273,7 @@ func (x *GetStatsResponse) String() string {
 func (*GetStatsResponse) ProtoMessage() {}
 
 func (x *GetStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[6]
+	mi := &file_proto_url_cutter_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -322,7 +286,7 @@ func (x *GetStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatsResponse.ProtoReflect.Descriptor instead.
 func (*GetStatsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{6}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetStatsResponse) GetTotalUsers() int64 {
@@ -349,7 +313,7 @@ type PostRequest struct {
 
 func (x *PostRequest) Reset() {
 	*x = PostRequest{}
-	mi := &file_proto_url_cutter_proto_msgTypes[7]
+	mi := &file_proto_url_cutter_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -361,7 +325,7 @@ func (x *PostRequest) String() string {
 func (*PostRequest) ProtoMessage() {}
 
 func (x *PostRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[7]
+	mi := &file_proto_url_cutter_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -374,7 +338,7 @@ func (x *PostRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostRequest.ProtoReflect.Descriptor instead.
 func (*PostRequest) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{7}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PostRequest) GetUserId() int64 {
@@ -400,7 +364,7 @@ type PostResponse struct {
 
 func (x *PostResponse) Reset() {
 	*x = PostResponse{}
-	mi := &file_proto_url_cutter_proto_msgTypes[8]
+	mi := &file_proto_url_cutter_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -412,7 +376,7 @@ func (x *PostResponse) String() string {
 func (*PostResponse) ProtoMessage() {}
 
 func (x *PostResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[8]
+	mi := &file_proto_url_cutter_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -425,7 +389,7 @@ func (x *PostResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostResponse.ProtoReflect.Descriptor instead.
 func (*PostResponse) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{8}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PostResponse) GetShortUrl() string {
@@ -437,7 +401,7 @@ func (x *PostResponse) GetShortUrl() string {
 
 type BatchRequestItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserID        int64                  `protobuf:"varint,1,opt,name=userID,proto3" json:"userID,omitempty"`
+	CorrelationId int64                  `protobuf:"varint,1,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`
 	OriginalUrl   string                 `protobuf:"bytes,2,opt,name=original_url,json=originalUrl,proto3" json:"original_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -445,7 +409,7 @@ type BatchRequestItem struct {
 
 func (x *BatchRequestItem) Reset() {
 	*x = BatchRequestItem{}
-	mi := &file_proto_url_cutter_proto_msgTypes[9]
+	mi := &file_proto_url_cutter_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -457,7 +421,7 @@ func (x *BatchRequestItem) String() string {
 func (*BatchRequestItem) ProtoMessage() {}
 
 func (x *BatchRequestItem) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[9]
+	mi := &file_proto_url_cutter_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -470,12 +434,12 @@ func (x *BatchRequestItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchRequestItem.ProtoReflect.Descriptor instead.
 func (*BatchRequestItem) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{9}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *BatchRequestItem) GetUserID() int64 {
+func (x *BatchRequestItem) GetCorrelationId() int64 {
 	if x != nil {
-		return x.UserID
+		return x.CorrelationId
 	}
 	return 0
 }
@@ -489,7 +453,7 @@ func (x *BatchRequestItem) GetOriginalUrl() string {
 
 type BatchResponseItem struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserID        int64                  `protobuf:"varint,1,opt,name=userID,proto3" json:"userID,omitempty"`
+	CorrelationId int64                  `protobuf:"varint,1,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`
 	ShortUrl      string                 `protobuf:"bytes,2,opt,name=short_url,json=shortUrl,proto3" json:"short_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -497,7 +461,7 @@ type BatchResponseItem struct {
 
 func (x *BatchResponseItem) Reset() {
 	*x = BatchResponseItem{}
-	mi := &file_proto_url_cutter_proto_msgTypes[10]
+	mi := &file_proto_url_cutter_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -509,7 +473,7 @@ func (x *BatchResponseItem) String() string {
 func (*BatchResponseItem) ProtoMessage() {}
 
 func (x *BatchResponseItem) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[10]
+	mi := &file_proto_url_cutter_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -522,12 +486,12 @@ func (x *BatchResponseItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchResponseItem.ProtoReflect.Descriptor instead.
 func (*BatchResponseItem) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{10}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *BatchResponseItem) GetUserID() int64 {
+func (x *BatchResponseItem) GetCorrelationId() int64 {
 	if x != nil {
-		return x.UserID
+		return x.CorrelationId
 	}
 	return 0
 }
@@ -549,7 +513,7 @@ type PostBatchRequest struct {
 
 func (x *PostBatchRequest) Reset() {
 	*x = PostBatchRequest{}
-	mi := &file_proto_url_cutter_proto_msgTypes[11]
+	mi := &file_proto_url_cutter_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -561,7 +525,7 @@ func (x *PostBatchRequest) String() string {
 func (*PostBatchRequest) ProtoMessage() {}
 
 func (x *PostBatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[11]
+	mi := &file_proto_url_cutter_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +538,7 @@ func (x *PostBatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostBatchRequest.ProtoReflect.Descriptor instead.
 func (*PostBatchRequest) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{11}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PostBatchRequest) GetUserID() int64 {
@@ -600,7 +564,7 @@ type PostBatchResponse struct {
 
 func (x *PostBatchResponse) Reset() {
 	*x = PostBatchResponse{}
-	mi := &file_proto_url_cutter_proto_msgTypes[12]
+	mi := &file_proto_url_cutter_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -612,7 +576,7 @@ func (x *PostBatchResponse) String() string {
 func (*PostBatchResponse) ProtoMessage() {}
 
 func (x *PostBatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[12]
+	mi := &file_proto_url_cutter_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -625,7 +589,7 @@ func (x *PostBatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostBatchResponse.ProtoReflect.Descriptor instead.
 func (*PostBatchResponse) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{12}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PostBatchResponse) GetItems() []*BatchResponseItem {
@@ -644,7 +608,7 @@ type DeleteUserURLsRequest struct {
 
 func (x *DeleteUserURLsRequest) Reset() {
 	*x = DeleteUserURLsRequest{}
-	mi := &file_proto_url_cutter_proto_msgTypes[13]
+	mi := &file_proto_url_cutter_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -656,7 +620,7 @@ func (x *DeleteUserURLsRequest) String() string {
 func (*DeleteUserURLsRequest) ProtoMessage() {}
 
 func (x *DeleteUserURLsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[13]
+	mi := &file_proto_url_cutter_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -669,7 +633,7 @@ func (x *DeleteUserURLsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserURLsRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserURLsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{13}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DeleteUserURLsRequest) GetOriginalUrls() []string {
@@ -687,7 +651,7 @@ type DeleteUserURLsResponse struct {
 
 func (x *DeleteUserURLsResponse) Reset() {
 	*x = DeleteUserURLsResponse{}
-	mi := &file_proto_url_cutter_proto_msgTypes[14]
+	mi := &file_proto_url_cutter_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -699,7 +663,7 @@ func (x *DeleteUserURLsResponse) String() string {
 func (*DeleteUserURLsResponse) ProtoMessage() {}
 
 func (x *DeleteUserURLsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[14]
+	mi := &file_proto_url_cutter_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -712,7 +676,7 @@ func (x *DeleteUserURLsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserURLsResponse.ProtoReflect.Descriptor instead.
 func (*DeleteUserURLsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{14}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{13}
 }
 
 type CheckConnecToDBResponse struct {
@@ -723,7 +687,7 @@ type CheckConnecToDBResponse struct {
 
 func (x *CheckConnecToDBResponse) Reset() {
 	*x = CheckConnecToDBResponse{}
-	mi := &file_proto_url_cutter_proto_msgTypes[15]
+	mi := &file_proto_url_cutter_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -735,7 +699,7 @@ func (x *CheckConnecToDBResponse) String() string {
 func (*CheckConnecToDBResponse) ProtoMessage() {}
 
 func (x *CheckConnecToDBResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_url_cutter_proto_msgTypes[15]
+	mi := &file_proto_url_cutter_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -748,7 +712,7 @@ func (x *CheckConnecToDBResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckConnecToDBResponse.ProtoReflect.Descriptor instead.
 func (*CheckConnecToDBResponse) Descriptor() ([]byte, []int) {
-	return file_proto_url_cutter_proto_rawDescGZIP(), []int{15}
+	return file_proto_url_cutter_proto_rawDescGZIP(), []int{14}
 }
 
 var File_proto_url_cutter_proto protoreflect.FileDescriptor
@@ -767,8 +731,7 @@ const file_proto_url_cutter_proto_rawDesc = "" +
 	"\x12GetUserURLSRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\"R\n" +
 	"\x13GetUserURLSResponse\x12;\n" +
-	"\roriginal_urls\x18\x01 \x03(\v2\x16.urlcutter.ShortenURLsR\foriginalUrls\"\x11\n" +
-	"\x0fGetStatsRequest\"R\n" +
+	"\roriginal_urls\x18\x01 \x03(\v2\x16.urlcutter.ShortenURLsR\foriginalUrls\"R\n" +
 	"\x10GetStatsResponse\x12\x1f\n" +
 	"\vtotal_users\x18\x01 \x01(\x03R\n" +
 	"totalUsers\x12\x1d\n" +
@@ -778,12 +741,12 @@ const file_proto_url_cutter_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12!\n" +
 	"\foriginal_url\x18\x02 \x01(\tR\voriginalUrl\"+\n" +
 	"\fPostResponse\x12\x1b\n" +
-	"\tshort_url\x18\x01 \x01(\tR\bshortUrl\"M\n" +
-	"\x10BatchRequestItem\x12\x16\n" +
-	"\x06userID\x18\x01 \x01(\x03R\x06userID\x12!\n" +
-	"\foriginal_url\x18\x02 \x01(\tR\voriginalUrl\"H\n" +
-	"\x11BatchResponseItem\x12\x16\n" +
-	"\x06userID\x18\x01 \x01(\x03R\x06userID\x12\x1b\n" +
+	"\tshort_url\x18\x01 \x01(\tR\bshortUrl\"\\\n" +
+	"\x10BatchRequestItem\x12%\n" +
+	"\x0ecorrelation_id\x18\x01 \x01(\x03R\rcorrelationId\x12!\n" +
+	"\foriginal_url\x18\x02 \x01(\tR\voriginalUrl\"W\n" +
+	"\x11BatchResponseItem\x12%\n" +
+	"\x0ecorrelation_id\x18\x01 \x01(\x03R\rcorrelationId\x12\x1b\n" +
 	"\tshort_url\x18\x02 \x01(\tR\bshortUrl\"]\n" +
 	"\x10PostBatchRequest\x12\x16\n" +
 	"\x06userID\x18\x01 \x01(\x03R\x06userID\x121\n" +
@@ -793,12 +756,12 @@ const file_proto_url_cutter_proto_rawDesc = "" +
 	"\x15DeleteUserURLsRequest\x12#\n" +
 	"\roriginal_urls\x18\x01 \x03(\tR\foriginalUrls\"\x18\n" +
 	"\x16DeleteUserURLsResponse\"\x19\n" +
-	"\x17CheckConnecToDBResponse2\x97\x04\n" +
+	"\x17CheckConnecToDBResponse2\x93\x04\n" +
 	"\tURLCutter\x12;\n" +
 	"\n" +
 	"GetHandler\x12\x15.urlcutter.GetRequest\x1a\x16.urlcutter.GetResponse\x12L\n" +
-	"\vGetUserURLs\x12\x1d.urlcutter.GetUserURLSRequest\x1a\x1e.urlcutter.GetUserURLSResponse\x12J\n" +
-	"\x0fGetStatsHandler\x12\x1a.urlcutter.GetStatsRequest\x1a\x1b.urlcutter.GetStatsResponse\x12>\n" +
+	"\vGetUserURLs\x12\x1d.urlcutter.GetUserURLSRequest\x1a\x1e.urlcutter.GetUserURLSResponse\x12F\n" +
+	"\x0fGetStatsHandler\x12\x16.google.protobuf.Empty\x1a\x1b.urlcutter.GetStatsResponse\x12>\n" +
 	"\vPostHandler\x12\x16.urlcutter.PostRequest\x1a\x17.urlcutter.PostResponse\x12M\n" +
 	"\x10PostBatchHandler\x12\x1b.urlcutter.PostBatchRequest\x1a\x1c.urlcutter.PostBatchResponse\x12U\n" +
 	"\x0eDeleteUserURLs\x12 .urlcutter.DeleteUserURLsRequest\x1a!.urlcutter.DeleteUserURLsResponse\x12M\n" +
@@ -816,44 +779,43 @@ func file_proto_url_cutter_proto_rawDescGZIP() []byte {
 	return file_proto_url_cutter_proto_rawDescData
 }
 
-var file_proto_url_cutter_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_proto_url_cutter_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_proto_url_cutter_proto_goTypes = []any{
 	(*GetRequest)(nil),              // 0: urlcutter.GetRequest
 	(*GetResponse)(nil),             // 1: urlcutter.GetResponse
 	(*ShortenURLs)(nil),             // 2: urlcutter.ShortenURLs
 	(*GetUserURLSRequest)(nil),      // 3: urlcutter.GetUserURLSRequest
 	(*GetUserURLSResponse)(nil),     // 4: urlcutter.GetUserURLSResponse
-	(*GetStatsRequest)(nil),         // 5: urlcutter.GetStatsRequest
-	(*GetStatsResponse)(nil),        // 6: urlcutter.GetStatsResponse
-	(*PostRequest)(nil),             // 7: urlcutter.PostRequest
-	(*PostResponse)(nil),            // 8: urlcutter.PostResponse
-	(*BatchRequestItem)(nil),        // 9: urlcutter.BatchRequestItem
-	(*BatchResponseItem)(nil),       // 10: urlcutter.BatchResponseItem
-	(*PostBatchRequest)(nil),        // 11: urlcutter.PostBatchRequest
-	(*PostBatchResponse)(nil),       // 12: urlcutter.PostBatchResponse
-	(*DeleteUserURLsRequest)(nil),   // 13: urlcutter.DeleteUserURLsRequest
-	(*DeleteUserURLsResponse)(nil),  // 14: urlcutter.DeleteUserURLsResponse
-	(*CheckConnecToDBResponse)(nil), // 15: urlcutter.CheckConnecToDBResponse
-	(*emptypb.Empty)(nil),           // 16: google.protobuf.Empty
+	(*GetStatsResponse)(nil),        // 5: urlcutter.GetStatsResponse
+	(*PostRequest)(nil),             // 6: urlcutter.PostRequest
+	(*PostResponse)(nil),            // 7: urlcutter.PostResponse
+	(*BatchRequestItem)(nil),        // 8: urlcutter.BatchRequestItem
+	(*BatchResponseItem)(nil),       // 9: urlcutter.BatchResponseItem
+	(*PostBatchRequest)(nil),        // 10: urlcutter.PostBatchRequest
+	(*PostBatchResponse)(nil),       // 11: urlcutter.PostBatchResponse
+	(*DeleteUserURLsRequest)(nil),   // 12: urlcutter.DeleteUserURLsRequest
+	(*DeleteUserURLsResponse)(nil),  // 13: urlcutter.DeleteUserURLsResponse
+	(*CheckConnecToDBResponse)(nil), // 14: urlcutter.CheckConnecToDBResponse
+	(*emptypb.Empty)(nil),           // 15: google.protobuf.Empty
 }
 var file_proto_url_cutter_proto_depIdxs = []int32{
 	2,  // 0: urlcutter.GetUserURLSResponse.original_urls:type_name -> urlcutter.ShortenURLs
-	9,  // 1: urlcutter.PostBatchRequest.items:type_name -> urlcutter.BatchRequestItem
-	10, // 2: urlcutter.PostBatchResponse.items:type_name -> urlcutter.BatchResponseItem
+	8,  // 1: urlcutter.PostBatchRequest.items:type_name -> urlcutter.BatchRequestItem
+	9,  // 2: urlcutter.PostBatchResponse.items:type_name -> urlcutter.BatchResponseItem
 	0,  // 3: urlcutter.URLCutter.GetHandler:input_type -> urlcutter.GetRequest
 	3,  // 4: urlcutter.URLCutter.GetUserURLs:input_type -> urlcutter.GetUserURLSRequest
-	5,  // 5: urlcutter.URLCutter.GetStatsHandler:input_type -> urlcutter.GetStatsRequest
-	7,  // 6: urlcutter.URLCutter.PostHandler:input_type -> urlcutter.PostRequest
-	11, // 7: urlcutter.URLCutter.PostBatchHandler:input_type -> urlcutter.PostBatchRequest
-	13, // 8: urlcutter.URLCutter.DeleteUserURLs:input_type -> urlcutter.DeleteUserURLsRequest
-	16, // 9: urlcutter.URLCutter.CheckConnecToDB:input_type -> google.protobuf.Empty
+	15, // 5: urlcutter.URLCutter.GetStatsHandler:input_type -> google.protobuf.Empty
+	6,  // 6: urlcutter.URLCutter.PostHandler:input_type -> urlcutter.PostRequest
+	10, // 7: urlcutter.URLCutter.PostBatchHandler:input_type -> urlcutter.PostBatchRequest
+	12, // 8: urlcutter.URLCutter.DeleteUserURLs:input_type -> urlcutter.DeleteUserURLsRequest
+	15, // 9: urlcutter.URLCutter.CheckConnecToDB:input_type -> google.protobuf.Empty
 	1,  // 10: urlcutter.URLCutter.GetHandler:output_type -> urlcutter.GetResponse
 	4,  // 11: urlcutter.URLCutter.GetUserURLs:output_type -> urlcutter.GetUserURLSResponse
-	6,  // 12: urlcutter.URLCutter.GetStatsHandler:output_type -> urlcutter.GetStatsResponse
-	8,  // 13: urlcutter.URLCutter.PostHandler:output_type -> urlcutter.PostResponse
-	12, // 14: urlcutter.URLCutter.PostBatchHandler:output_type -> urlcutter.PostBatchResponse
-	14, // 15: urlcutter.URLCutter.DeleteUserURLs:output_type -> urlcutter.DeleteUserURLsResponse
-	15, // 16: urlcutter.URLCutter.CheckConnecToDB:output_type -> urlcutter.CheckConnecToDBResponse
+	5,  // 12: urlcutter.URLCutter.GetStatsHandler:output_type -> urlcutter.GetStatsResponse
+	7,  // 13: urlcutter.URLCutter.PostHandler:output_type -> urlcutter.PostResponse
+	11, // 14: urlcutter.URLCutter.PostBatchHandler:output_type -> urlcutter.PostBatchResponse
+	13, // 15: urlcutter.URLCutter.DeleteUserURLs:output_type -> urlcutter.DeleteUserURLsResponse
+	14, // 16: urlcutter.URLCutter.CheckConnecToDB:output_type -> urlcutter.CheckConnecToDBResponse
 	10, // [10:17] is the sub-list for method output_type
 	3,  // [3:10] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
@@ -872,7 +834,7 @@ func file_proto_url_cutter_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_url_cutter_proto_rawDesc), len(file_proto_url_cutter_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
