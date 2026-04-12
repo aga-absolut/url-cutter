@@ -47,7 +47,6 @@ func main() {
 	handler := handler.NewHandler(service, logger)
 	router := router.NewRouter(handler)
 
-	// Запуск серверов
 	httpServer := transport.StartHTTPServer(cfg, router, logger)
 	grpcServer := transport.StartGRPCServer(cfg, service, logger)
 

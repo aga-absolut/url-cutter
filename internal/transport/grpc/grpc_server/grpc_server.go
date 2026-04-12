@@ -15,10 +15,10 @@ import (
 type URLCutterServer struct {
 	pb.UnimplementedURLCutterServer
 
-	service *service.Service
+	service service.Service
 }
 
-func NewURLCutterServer(service *service.Service) pb.URLCutterServer {
+func NewURLCutterServer(service service.Service) pb.URLCutterServer {
 	return &URLCutterServer{service: service}
 }
 

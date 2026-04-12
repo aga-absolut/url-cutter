@@ -15,11 +15,12 @@ import (
 )
 
 func ExampleHandler_PostHandler() {
+	deleteCh := make(chan string, 10)
 	shortURL := "http://localhost:8080/Afhbwof2"
 	cfg := &config.Config{HTTPServerAddress: "http://localhost:8080/"}
 	memory := memory.NewMemoryStorage()
-	service := service.Service{Config: cfg, Storage: memory}
-	handler := Handler{service: &service}
+	service := service.NewService(cfg, memory, deleteCh)
+	handler := Handler{service: service}
 
 	request := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(shortURL))
 	request.Header.Set("Content-Type", "application/json")
@@ -47,12 +48,13 @@ func ExampleHandler_PostHandler() {
 }
 
 func ExampleHandler_GetHandler() {
+	deleteCh := make(chan string, 10)
 	memory := memory.NewMemoryStorage()
 	memory.Set(context.Background(), "afhbw222", "https://absolute.ru", 0)
 
 	cfg := &config.Config{HTTPServerAddress: "/afhbw222"}
-	service := service.Service{Config: cfg, Storage: memory}
-	handler := Handler{service: &service}
+	service := service.NewService(cfg, memory, deleteCh)
+	handler := Handler{service: service}
 
 	r := chi.NewRouter()
 	r.Get("/{id}", handler.GetHandler)

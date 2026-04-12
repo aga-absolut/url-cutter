@@ -46,7 +46,7 @@ func StartHTTPServer(cfg *config.Config, handler http.Handler, logger *zap.Sugar
 
 // grpcurl -plaintext -d '{\"original_url\": \"https://google.com\"}' localhost:3200 urlcutter.URLCutter.PostHandler
 // grpcurl -plaintext -d '{\"short_url\": \"940689ec\"}' localhost:3200 urlcutter.URLCutter.GetHandler
-func StartGRPCServer(cfg *config.Config, service *service.Service, logger *zap.SugaredLogger) *grpc.Server {
+func StartGRPCServer(cfg *config.Config, service service.Service, logger *zap.SugaredLogger) *grpc.Server {
 	server := grpc.NewServer()
 	pb.RegisterURLCutterServer(server, grpcserver.NewURLCutterServer(service))
 	reflection.Register(server)

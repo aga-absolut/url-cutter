@@ -19,12 +19,12 @@ import (
 
 // Структура обработчика
 type Handler struct {
-	service *service.Service
+	service service.Service
 	logger  *zap.SugaredLogger
 }
 
 // NewHandler создает новую структуру Handler
-func NewHandler(service *service.Service, logger *zap.SugaredLogger) *Handler {
+func NewHandler(service service.Service, logger *zap.SugaredLogger) *Handler {
 	handler := &Handler{
 		service: service,
 		logger:  logger,
@@ -62,7 +62,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	userID, err := jwt.GetUserID(cookie.Value)
 	if err != nil {
 		h.logger.Errorw("Failed to get userID", "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, errs.ErrInGettingURLs):
 			h.logger.Errorw("Failed to get user URLs", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 
 		default:
 			h.logger.Errorw("failed to get user URLs", "error", err)
@@ -83,7 +83,7 @@ func (h *Handler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(urls); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -100,7 +100,7 @@ func (h *Handler) CheckConnecToDB(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	originalURL, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
@@ -118,8 +118,8 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := jwt.GetUserID(cookie.Value)
 	if err != nil {
-		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
 		h.logger.Errorw("Failed to get userID", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -149,7 +149,7 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 	var batch []model.ShortenBatchRequest
 	if err := json.NewDecoder(r.Body).Decode(&batch); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
@@ -168,8 +168,8 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := jwt.GetUserID(cookie.Value)
 	if err != nil {
-		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
 		h.logger.Errorw("Failed to get userID", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -180,19 +180,19 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "error batch is empty", http.StatusBadRequest)
 
 		case errors.Is(err, errs.ErrInGettingUserID):
-			http.Error(w, "Failed to get userID", http.StatusInternalServerError)
 			h.logger.Errorw("Failed to get userID", "error", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 
 		default:
 			h.logger.Errorw("error set batch url", "error", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Bad request", http.StatusBadRequest)
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -201,7 +201,7 @@ func (h *Handler) PostBatchHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	JSONRequest := model.JSONRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&JSONRequest); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
@@ -220,8 +220,8 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := jwt.GetUserID(cookie.Value)
 	if err != nil {
-		http.Error(w, "Failed to get userID", http.StatusInternalServerError)
 		h.logger.Errorw("Failed to get userID", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -235,14 +235,14 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
 			if err := json.NewEncoder(w).Encode(response); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
 				return
 			}
 			return
 
 		default:
 			h.logger.Errorw("error set batch url", "error", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Bad request", http.StatusBadRequest)
 		}
 		return
 	}
@@ -250,7 +250,7 @@ func (h *Handler) JSONPostHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -298,13 +298,13 @@ func (h *Handler) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, errs.ErrTrustedSubnetIsEmpty):
-			http.Error(w, err.Error(), http.StatusForbidden)
+			http.Error(w, "forbidden", http.StatusForbidden)
 
 		case errors.Is(err, errs.ErrInGettingUrlsCount):
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 
 		default:
-			http.Error(w, err.Error(), http.StatusForbidden)
+			http.Error(w, "forbidden", http.StatusForbidden)
 		}
 		return
 	}

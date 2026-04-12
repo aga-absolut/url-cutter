@@ -13,14 +13,25 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/jwt"
 )
 
-type Service struct {
+type Service interface {
+	Ping() error
+	DeleteURLs(arrShortURLs []string)
+	GetURL(ctx context.Context, shortURL string) (string, bool)
+	GetStats(ctx context.Context, ip net.IP) (model.ResponseStats, error)
+	GetUserURLs(ctx context.Context, userID int) ([]model.ShortenURLs, error)
+	SetURL(ctx context.Context, originalURL []byte, userID int) (string, error)
+	SetURLFromJSON(ctx context.Context, req model.JSONRequest, userID int) (model.JSONResponse, error)
+	SetBatchURLs(ctx context.Context, batch []model.ShortenBatchRequest, userID int) ([]model.ShortenResponseItem, error)
+}
+
+type service struct {
 	Config     *config.Config
 	Storage    repository.Storage
 	deleteChan chan string
 }
 
-func NewService(config *config.Config, storage repository.Storage, deleteChan chan string) *Service {
-	service := &Service{
+func NewService(config *config.Config, storage repository.Storage, deleteChan chan string) *service {
+	service := &service{
 		Config:     config,
 		Storage:    storage,
 		deleteChan: deleteChan,
@@ -28,25 +39,25 @@ func NewService(config *config.Config, storage repository.Storage, deleteChan ch
 	return service
 }
 
-func (s *Service) Ping() error {
+func (s *service) Ping() error {
 	if err := s.Storage.Ping(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Service) GetURL(ctx context.Context, shortURL string) (string, bool) {
+func (s *service) GetURL(ctx context.Context, shortURL string) (string, bool) {
 	resURL, exist := s.Storage.Get(ctx, shortURL)
 	return resURL, exist
 }
 
-func (s *Service) DeleteURLs(arrShortURLs []string) {
+func (s *service) DeleteURLs(arrShortURLs []string) {
 	for _, shortURL := range arrShortURLs {
 		s.deleteChan <- shortURL
 	}
 }
 
-func (s *Service) GetUserURLs(ctx context.Context, userID int) ([]model.ShortenURLs, error) {
+func (s *service) GetUserURLs(ctx context.Context, userID int) ([]model.ShortenURLs, error) {
 	URLs, err := s.Storage.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, errs.ErrInGettingURLs
@@ -55,7 +66,7 @@ func (s *Service) GetUserURLs(ctx context.Context, userID int) ([]model.ShortenU
 	return URLs, nil
 }
 
-func (s *Service) SetURL(ctx context.Context, originalURL []byte, userID int) (string, error) {
+func (s *service) SetURL(ctx context.Context, originalURL []byte, userID int) (string, error) {
 	if len(originalURL) == 0 {
 		return "", errs.ErrEmptyBody
 	}
@@ -71,7 +82,7 @@ func (s *Service) SetURL(ctx context.Context, originalURL []byte, userID int) (s
 	return s.Config.Host + "/" + shortURL, nil
 }
 
-func (s *Service) SetBatchURLs(ctx context.Context, batch []model.ShortenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
+func (s *service) SetBatchURLs(ctx context.Context, batch []model.ShortenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	if len(batch) == 0 {
 		return nil, errs.ErrEmptyBatch
 	}
@@ -84,7 +95,7 @@ func (s *Service) SetBatchURLs(ctx context.Context, batch []model.ShortenBatchRe
 	return response, nil
 }
 
-func (s *Service) SetURLFromJSON(ctx context.Context, req model.JSONRequest, userID int) (model.JSONResponse, error) {
+func (s *service) SetURLFromJSON(ctx context.Context, req model.JSONRequest, userID int) (model.JSONResponse, error) {
 	if len(req.URL) == 0 {
 		return model.JSONResponse{}, errs.ErrEmptyBody
 	}
@@ -100,7 +111,7 @@ func (s *Service) SetURLFromJSON(ctx context.Context, req model.JSONRequest, use
 	return model.JSONResponse{Result: s.Config.Host + "/" + shortURL}, nil
 }
 
-func (s *Service) GetStats(ctx context.Context, ip net.IP) (model.ResponseStats, error) {
+func (s *service) GetStats(ctx context.Context, ip net.IP) (model.ResponseStats, error) {
 	if s.Config.TrustedSubnet == "" {
 		return model.ResponseStats{}, errs.ErrTrustedSubnetIsEmpty
 	}

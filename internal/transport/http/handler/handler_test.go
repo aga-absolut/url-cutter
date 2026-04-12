@@ -164,13 +164,14 @@ func TestPostReqJSON(t *testing.T) {
 }
 
 func Benchmark(b *testing.B) {
+	deleteCh := make(chan string, 10)
 	shortURL := "http://localhost:Afhbwof2"
 	cfg := &config.Config{HTTPServerAddress: "http://localhost:8080/"}
 	memory := memory.NewMemoryStorage()
 	memory.Set(context.Background(), shortURL, "https://yandex.ru", 0)
 
-	service := service.Service{Config: cfg, Storage: memory}
-	handler := Handler{service: &service}
+	service := service.NewService(cfg, memory, deleteCh)
+	handler := Handler{service: service}
 
 	request := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(shortURL))
 	request.Header.Set("Content-Type", "application/json")
