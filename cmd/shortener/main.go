@@ -12,7 +12,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/cert"
 	"github.com/aga-absolut/url-cutter/internal/config"
-	grpc_server "github.com/aga-absolut/url-cutter/internal/grpc"
+	"github.com/aga-absolut/url-cutter/internal/grpc_server"
 	"github.com/aga-absolut/url-cutter/internal/handler"
 	"github.com/aga-absolut/url-cutter/internal/router"
 	"github.com/aga-absolut/url-cutter/internal/service"

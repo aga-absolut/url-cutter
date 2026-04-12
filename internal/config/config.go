@@ -73,6 +73,9 @@ func ParseConfigFromFile(name string, cfg *Config) error {
 	if cfg.HTTPServerAddress == "" {
 		cfg.HTTPServerAddress = configFile.HTTPServerAddress
 	}
+	if cfg.GRPCServerAddress == "" {
+		cfg.GRPCServerAddress = configFile.GRPCServerAddress
+	}
 	if cfg.Host == "" {
 		cfg.Host = configFile.Host
 	}
