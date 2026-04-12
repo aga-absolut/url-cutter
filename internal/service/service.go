@@ -7,10 +7,10 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/errs"
+	"github.com/aga-absolut/url-cutter/internal/generate"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/repository"
-	"github.com/aga-absolut/url-cutter/internal/util"
-	"github.com/aga-absolut/url-cutter/middleware/jwt"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/jwt"
 )
 
 type Service struct {
@@ -60,7 +60,7 @@ func (s *Service) SetURL(ctx context.Context, originalURL []byte, userID int) (s
 		return "", errs.ErrEmptyBody
 	}
 
-	shortURL := util.Generate(string(originalURL))
+	shortURL := generate.Generate(string(originalURL))
 	if shortKey, err := s.Storage.Set(ctx, shortURL, string(originalURL), userID); err != nil {
 		if errors.Is(err, errs.ErrURLAlreadyExists) {
 			return s.Config.Host + "/" + shortKey, err
@@ -89,7 +89,7 @@ func (s *Service) SetURLFromJSON(ctx context.Context, req model.JSONRequest, use
 		return model.JSONResponse{}, errs.ErrEmptyBody
 	}
 
-	shortURL := util.Generate(req.URL)
+	shortURL := generate.Generate(req.URL)
 	if shortKey, err := s.Storage.Set(ctx, shortURL, req.URL, userID); err != nil {
 		if errors.Is(err, errs.ErrURLAlreadyExists) {
 			return model.JSONResponse{Result: s.Config.Host + "/" + shortKey}, err

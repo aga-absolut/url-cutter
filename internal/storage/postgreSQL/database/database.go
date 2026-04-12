@@ -11,8 +11,8 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/errs"
+	"github.com/aga-absolut/url-cutter/internal/generate"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/util"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -82,7 +82,7 @@ func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShortenBat
 	defer stmt.Close()
 
 	for _, v := range batch {
-		shortKey := util.Generate(v.OriginalURL)
+		shortKey := generate.Generate(v.OriginalURL)
 		_, err = stmt.ExecContext(ctx, shortKey, v.OriginalURL, userID)
 		if err != nil {
 			var PgErr *pgconn.PgError

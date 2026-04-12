@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/aga-absolut/url-cutter/internal/service"
-	pb "github.com/aga-absolut/url-cutter/proto"
+	pb "github.com/aga-absolut/url-cutter/internal/transport/grpc/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"

@@ -11,7 +11,7 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/errs"
 	"github.com/aga-absolut/url-cutter/internal/model"
 	"github.com/aga-absolut/url-cutter/internal/service"
-	"github.com/aga-absolut/url-cutter/middleware/jwt"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/jwt"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"

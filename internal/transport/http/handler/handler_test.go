@@ -15,8 +15,8 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/service"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
-	"github.com/aga-absolut/url-cutter/middleware/jwt"
-	"github.com/aga-absolut/url-cutter/middleware/logger"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/jwt"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
