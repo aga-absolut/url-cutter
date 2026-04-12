@@ -83,7 +83,7 @@ func main() {
 	// grpcurl -plaintext -d '{\"short_url\": \"940689ec\"}' localhost:3200 urlcutter.URLCutter.GetHandler
 
 	gRPCserver := grpc.NewServer()
-	pb.RegisterURLCutterServer(gRPCserver, grpc_server.NewURLCutterServer(service))
+	pb.RegisterURLCutterServer(gRPCserver, grpcserver.NewURLCutterServer(service))
 	reflection.Register(gRPCserver)
 
 	go func() {
