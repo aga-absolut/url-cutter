@@ -1,10 +1,10 @@
 package router
 
 import (
-	"github.com/aga-absolut/url-cutter/internal/handler"
-	"github.com/aga-absolut/url-cutter/middleware/compress"
-	"github.com/aga-absolut/url-cutter/middleware/jwt"
-	"github.com/aga-absolut/url-cutter/middleware/logger"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/handler"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/compress"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/jwt"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/logger"
 	"github.com/go-chi/chi/v5"
 )
 

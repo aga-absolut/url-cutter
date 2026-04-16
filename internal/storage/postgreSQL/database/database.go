@@ -6,13 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/errs"
+	"github.com/aga-absolut/url-cutter/internal/generate"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/util"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -62,7 +62,7 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 			if err := row.Scan(&shortKey); err != nil {
 				return "", fmt.Errorf("error scaning query row: %w", err)
 			}
-			return shortKey, os.ErrExist
+			return shortKey, errs.ErrURLAlreadyExists
 		}
 		return "", err
 	}
@@ -73,7 +73,7 @@ func (s *DBPostgreSQL) Set(ctx context.Context, shortURL, originalURL string, us
 }
 
 // Set добавляет список URL в базу данных.
-func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
+func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShortenBatchRequest, userID int) ([]model.ShortenResponseItem, error) {
 	var response []model.ShortenResponseItem
 	stmt, err := s.db.Prepare(`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`)
 	if err != nil {
@@ -82,7 +82,7 @@ func (s *DBPostgreSQL) SetBatchURL(ctx context.Context, batch []model.ShotenBatc
 	defer stmt.Close()
 
 	for _, v := range batch {
-		shortKey := util.Generate(v.OriginalURL)
+		shortKey := generate.Generate(v.OriginalURL)
 		_, err = stmt.ExecContext(ctx, shortKey, v.OriginalURL, userID)
 		if err != nil {
 			var PgErr *pgconn.PgError

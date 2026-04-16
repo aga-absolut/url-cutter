@@ -12,10 +12,11 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/model"
+	"github.com/aga-absolut/url-cutter/internal/service"
 	"github.com/aga-absolut/url-cutter/internal/storage"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
-	"github.com/aga-absolut/url-cutter/middleware/jwt"
-	"github.com/aga-absolut/url-cutter/middleware/logger"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/jwt"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 )
@@ -47,15 +48,16 @@ func TestHandle(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		ServerAddress: "http://localhost:8080/",
-		Host:          "http://localhost:8080",
+		HTTPServerAddress: "http://localhost:8080/",
+		Host:              "http://localhost:8080",
 	}
 	deleteCh := make(chan string)
 	log := logger.NewLogger()
 	storage := storage.NewStorage(cfg, log)
+	service := service.NewService(cfg, storage, deleteCh)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hand := NewHandler(cfg, storage, log, deleteCh)
+			hand := NewHandler(service, log)
 
 			router := chi.NewRouter()
 			router.Get("/{id}", hand.GetHandler)
@@ -63,7 +65,7 @@ func TestHandle(t *testing.T) {
 
 			//----------------------------------------Post request
 
-			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(tt.body))
 
 			token, _ := jwt.BuildJWTString()
 			req.AddCookie(&http.Cookie{
@@ -90,7 +92,7 @@ func TestHandle(t *testing.T) {
 
 			//----------------------------------------Get request
 
-			req = httptest.NewRequest(http.MethodGet, cfg.ServerAddress+shortURL, nil)
+			req = httptest.NewRequest(http.MethodGet, cfg.HTTPServerAddress+shortURL, nil)
 			w = httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
@@ -120,21 +122,22 @@ func TestPostReqJSON(t *testing.T) {
 	}
 
 	cfg := &config.Config{
-		ServerAddress: "http://localhost:8080/api/shorten",
-		Host:          "http://localhost:8080",
-		FilePath:      "storage.txt",
+		HTTPServerAddress: "http://localhost:8080/api/shorten",
+		Host:              "http://localhost:8080",
+		FilePath:          "storage.txt",
 	}
 	log := logger.NewLogger()
 	deleteCh := make(chan string)
 	storage := storage.NewStorage(cfg, log)
+	service := service.NewService(cfg, storage, deleteCh)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHandler(cfg, storage, log, deleteCh)
+			handler := NewHandler(service, log)
 
 			router := chi.NewRouter()
 			router.Post("/api/shorten", handler.JSONPostHandler)
 
-			req := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(tt.body))
 
 			token, _ := jwt.BuildJWTString()
 			req.AddCookie(&http.Cookie{
@@ -161,16 +164,16 @@ func TestPostReqJSON(t *testing.T) {
 }
 
 func Benchmark(b *testing.B) {
+	deleteCh := make(chan string, 10)
 	shortURL := "http://localhost:Afhbwof2"
-	cfg := &config.Config{ServerAddress: "http://localhost:8080/"}
+	cfg := &config.Config{HTTPServerAddress: "http://localhost:8080/"}
 	memory := memory.NewMemoryStorage()
 	memory.Set(context.Background(), shortURL, "https://yandex.ru", 0)
 
-	handler := Handler{
-		config:  cfg,
-		storage: memory,
-	}
-	request := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(shortURL))
+	service := service.NewService(cfg, memory, deleteCh)
+	handler := Handler{service: service}
+
+	request := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(shortURL))
 	request.Header.Set("Content-Type", "application/json")
 	recoder := httptest.NewRecorder()
 

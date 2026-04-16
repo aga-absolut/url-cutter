@@ -1,6 +1,12 @@
 package model
 
 type (
+	// DataForCert струкура необходимая для декодирования данных из файла для сертификата
+	DataForCert struct {
+		CertFile string `json:"certFile"`
+		KeyFile  string `json:"keyFile"`
+	}
+
 	// ResponseStats структура необходимая для кодирования JSON для данный о количестве urlов и userов.
 	ResponseStats struct {
 		URLs  int `json:"urls"`
@@ -25,7 +31,7 @@ type (
 	}
 
 	// ShotenBatchRequest структура необходимая для декодирования JSON для списка URL.
-	ShotenBatchRequest struct {
+	ShortenBatchRequest struct {
 		CorrelationID string `json:"correlation_id"`
 		OriginalURL   string `json:"original_url"`
 	}

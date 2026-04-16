@@ -8,22 +8,21 @@ import (
 	"strings"
 
 	"github.com/aga-absolut/url-cutter/internal/config"
+	"github.com/aga-absolut/url-cutter/internal/service"
 	"github.com/aga-absolut/url-cutter/internal/storage/memory"
-	"github.com/aga-absolut/url-cutter/middleware/jwt"
+	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/jwt"
 	"github.com/go-chi/chi/v5"
 )
 
 func ExampleHandler_PostHandler() {
+	deleteCh := make(chan string, 10)
 	shortURL := "http://localhost:8080/Afhbwof2"
-	cfg := &config.Config{ServerAddress: "http://localhost:8080/"}
+	cfg := &config.Config{HTTPServerAddress: "http://localhost:8080/"}
 	memory := memory.NewMemoryStorage()
+	service := service.NewService(cfg, memory, deleteCh)
+	handler := Handler{service: service}
 
-	handler := Handler{
-		config:  cfg,
-		storage: memory,
-	}
-
-	request := httptest.NewRequest(http.MethodPost, cfg.ServerAddress, strings.NewReader(shortURL))
+	request := httptest.NewRequest(http.MethodPost, cfg.HTTPServerAddress, strings.NewReader(shortURL))
 	request.Header.Set("Content-Type", "application/json")
 
 	token, _ := jwt.BuildJWTString()
@@ -49,16 +48,18 @@ func ExampleHandler_PostHandler() {
 }
 
 func ExampleHandler_GetHandler() {
+	deleteCh := make(chan string, 10)
 	memory := memory.NewMemoryStorage()
 	memory.Set(context.Background(), "afhbw222", "https://absolute.ru", 0)
 
-	cfg := &config.Config{ServerAddress: "/afhbw222"}
-	handler := &Handler{config: cfg, storage: memory}
+	cfg := &config.Config{HTTPServerAddress: "/afhbw222"}
+	service := service.NewService(cfg, memory, deleteCh)
+	handler := Handler{service: service}
 
 	r := chi.NewRouter()
 	r.Get("/{id}", handler.GetHandler)
 
-	request := httptest.NewRequest(http.MethodGet, cfg.ServerAddress, nil)
+	request := httptest.NewRequest(http.MethodGet, cfg.HTTPServerAddress, nil)
 	recoder := httptest.NewRecorder()
 
 	r.ServeHTTP(recoder, request)
