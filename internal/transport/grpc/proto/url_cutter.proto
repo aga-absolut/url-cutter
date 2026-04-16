@@ -20,7 +20,7 @@ message ShortenURLs{
 message GetUserURLSRequest{
   int64 user_id = 1;
 }
-message GetUserURLSResponse{
+message GetUserURLsResponse{
   repeated ShortenURLs original_urls = 1;
 }
 

@@ -13,6 +13,9 @@ import (
 // Приоритет: PostgreSQL > File > Memory (по умолчанию).
 func NewStorage(config *config.Config, logger *zap.SugaredLogger) repository.Storage {
 	if config.DBDSN != "" {
+		if err := database.InitMigrations(config, logger); err != nil {
+			logger.Fatalw("don`t create migrations", "error", err)
+		}
 		logger.Infow("config PostgreSQL")
 		return database.NewDBPostgreSQL(config, logger)
 	}

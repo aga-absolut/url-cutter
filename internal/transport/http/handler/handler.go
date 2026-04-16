@@ -10,7 +10,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/errs"
 	"github.com/aga-absolut/url-cutter/internal/model"
-	"github.com/aga-absolut/url-cutter/internal/service"
+	"github.com/aga-absolut/url-cutter/internal/repository"
 	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/jwt"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -19,12 +19,12 @@ import (
 
 // Структура обработчика
 type Handler struct {
-	service service.Service
+	service repository.Service
 	logger  *zap.SugaredLogger
 }
 
 // NewHandler создает новую структуру Handler
-func NewHandler(service service.Service, logger *zap.SugaredLogger) *Handler {
+func NewHandler(service repository.Service, logger *zap.SugaredLogger) *Handler {
 	handler := &Handler{
 		service: service,
 		logger:  logger,

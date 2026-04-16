@@ -11,7 +11,6 @@ import (
 	"github.com/aga-absolut/url-cutter/internal/config"
 	"github.com/aga-absolut/url-cutter/internal/service"
 	"github.com/aga-absolut/url-cutter/internal/storage"
-	"github.com/aga-absolut/url-cutter/internal/storage/postgreSQL/database"
 	"github.com/aga-absolut/url-cutter/internal/transport"
 	"github.com/aga-absolut/url-cutter/internal/transport/http/handler"
 	"github.com/aga-absolut/url-cutter/internal/transport/http/middleware/logger"
@@ -36,11 +35,6 @@ func main() {
 	deleteChan := make(chan string, 10)
 	cfg := config.NewConfig()
 	logger := logger.NewLogger()
-	if cfg.DBDSN != "" {
-		if err := database.InitMigrations(cfg, logger); err != nil {
-			logger.Fatalw("don`t create migrations", "error", err)
-		}
-	}
 	storage := storage.NewStorage(cfg, logger)
 	worker := workers.NewWorkerPool(ctx, deleteChan, storage, config.SizeWorkers, logger)
 	service := service.NewService(cfg, storage, deleteChan)

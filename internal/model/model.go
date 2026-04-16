@@ -1,6 +1,12 @@
 package model
 
 type (
+	// DataForCert струкура необходимая для декодирования данных из файла для сертификата
+	DataForCert struct {
+		CertFile string `json:"certFile"`
+		KeyFile  string `json:"keyFile"`
+	}
+
 	// ResponseStats структура необходимая для кодирования JSON для данный о количестве urlов и userов.
 	ResponseStats struct {
 		URLs  int `json:"urls"`

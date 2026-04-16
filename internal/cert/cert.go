@@ -6,15 +6,18 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"math/big"
 	"net"
 	"os"
 	"time"
+
+	"github.com/aga-absolut/url-cutter/internal/model"
 )
 
 // GenerateCertificate создает сертификат
-func GenerateCertificate(certFile, keyFile string) error {
+func GenerateCertificate(data model.DataForCert) error {
 	// создаём шаблон сертификата
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
@@ -48,7 +51,7 @@ func GenerateCertificate(certFile, keyFile string) error {
 		Type:  "CERTIFICATE",
 		Bytes: certBytes,
 	})
-	if err := os.WriteFile(certFile, certPEM.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(data.CertFile, certPEM.Bytes(), 0644); err != nil {
 		return err
 	}
 
@@ -57,9 +60,23 @@ func GenerateCertificate(certFile, keyFile string) error {
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 	})
-	if err := os.WriteFile(keyFile, keyPEM.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(data.KeyFile, keyPEM.Bytes(), 0600); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func ReadCertFile() (model.DataForCert, error) {
+	var data model.DataForCert
+	file, err := os.Open("https_files.txt")
+	if err != nil {
+		return data, err
+	}
+
+	if err := json.NewDecoder(file).Decode(&data); err != nil {
+		return data, err
+	}
+
+	return data, nil
 }

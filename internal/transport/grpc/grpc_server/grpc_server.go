@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/aga-absolut/url-cutter/internal/service"
+	"github.com/aga-absolut/url-cutter/internal/repository"
 	pb "github.com/aga-absolut/url-cutter/internal/transport/grpc/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -15,10 +15,10 @@ import (
 type URLCutterServer struct {
 	pb.UnimplementedURLCutterServer
 
-	service service.Service
+	service repository.Service
 }
 
-func NewURLCutterServer(service service.Service) pb.URLCutterServer {
+func NewURLCutterServer(service repository.Service) pb.URLCutterServer {
 	return &URLCutterServer{service: service}
 }
 

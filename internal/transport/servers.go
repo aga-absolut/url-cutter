@@ -6,7 +6,7 @@ import (
 
 	"github.com/aga-absolut/url-cutter/internal/cert"
 	"github.com/aga-absolut/url-cutter/internal/config"
-	"github.com/aga-absolut/url-cutter/internal/service"
+	"github.com/aga-absolut/url-cutter/internal/repository"
 	grpcserver "github.com/aga-absolut/url-cutter/internal/transport/grpc/grpc_server"
 	pb "github.com/aga-absolut/url-cutter/internal/transport/grpc/proto"
 	"go.uber.org/zap"
@@ -24,14 +24,16 @@ func StartHTTPServer(cfg *config.Config, handler http.Handler, logger *zap.Sugar
 		logger.Infow("Starting HTTP server", "addr", cfg.HTTPServerAddress)
 
 		if cfg.EnableHTTPS {
-			certFile := "server.crt"
-			keyFile := "server.key"
+			certData, err := cert.ReadCertFile()
+			if err != nil {
+				logger.Fatalw("failed reading certificate", "error", err)
+			}
 
-			if err := cert.GenerateCertificate(certFile, keyFile); err != nil {
+			if err := cert.GenerateCertificate(certData); err != nil {
 				logger.Fatalw("failed generate certificate", "error", err)
 			}
 
-			if err := server.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+			if err := server.ListenAndServeTLS(certData.CertFile, certData.KeyFile); err != nil && err != http.ErrServerClosed {
 				logger.Fatalw("create HTTPS server error", "error", err)
 			}
 		} else {
@@ -46,7 +48,7 @@ func StartHTTPServer(cfg *config.Config, handler http.Handler, logger *zap.Sugar
 
 // grpcurl -plaintext -d '{\"original_url\": \"https://google.com\"}' localhost:3200 urlcutter.URLCutter.PostHandler
 // grpcurl -plaintext -d '{\"short_url\": \"940689ec\"}' localhost:3200 urlcutter.URLCutter.GetHandler
-func StartGRPCServer(cfg *config.Config, service service.Service, logger *zap.SugaredLogger) *grpc.Server {
+func StartGRPCServer(cfg *config.Config, service repository.Service, logger *zap.SugaredLogger) *grpc.Server {
 	server := grpc.NewServer()
 	pb.RegisterURLCutterServer(server, grpcserver.NewURLCutterServer(service))
 	reflection.Register(server)

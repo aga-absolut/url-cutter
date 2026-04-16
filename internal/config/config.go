@@ -9,14 +9,17 @@ import (
 	"github.com/caarlos0/env/v11"
 )
 
-// Секретный ключ
-var SecretKey = []byte("my_secret_key")
+// Дополнительные данные
+var (
+	// Секретный ключ
+	SecretKey = []byte("my_secret_key")
 
-// Время жизни токена
-var TokenExpTime = time.Hour * 3
+	// Время жизни токена
+	TokenExpTime = time.Hour * 3
 
-// Количество работающих
-var SizeWorkers = 1
+	// Количество работающих
+	SizeWorkers = 1
+)
 
 // Config структура
 type Config struct {
